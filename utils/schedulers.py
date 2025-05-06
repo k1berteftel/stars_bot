@@ -1,24 +1,42 @@
 import asyncio
+from datetime import datetime, timedelta
+
 from aiogram import Bot
 from aiogram import Bot
 from aiogram_dialog import DialogManager
 from aiogram.types import InlineKeyboardMarkup, Message
-from datetime import datetime, timedelta
-
-from .payment import check_crypto_payment, check_yookassa_payment
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+
+from .transactions import transfer_stars
+from .payment import check_crypto_payment, check_card_payment, check_oxa_payment
 from database.action_data_class import DataInteraction
 
 
 async def check_payment(bot: Bot, user_id: int, session: DataInteraction, scheduler: AsyncIOScheduler, **kwargs):
     invoice_id = kwargs.get('invoice_id')
     card_id = kwargs.get('card_id')
-    if await check_crypto_payment(invoice_id) or await check_yookassa_payment(card_id):
+    track_id = kwargs.get('track_id')
+    if await check_crypto_payment(invoice_id) or await check_card_payment(card_id) or await check_oxa_payment(track_id):
         # Отправить токены
         username = kwargs.get('username')
+        stars = kwargs.get('stars')
+        status = transfer_stars(username, stars)
+        if not status:
+            await bot.send_message(
+                chat_id=user_id,
+                text='🚨Во время начисления звезд что-то пошло не так, пожалуйста обратитесь в поддержку'
+            )
+            job = scheduler.get_job(f'payment_{user_id}')
+            if job:
+                job.remove()
+            stop_job = scheduler.get_job(f'stop_payment_{user_id}')
+            if stop_job:
+                stop_job.remove()
+            return
         await bot.send_message(
             chat_id=user_id,
-            text='Оплата была успешно совершенна, звезды были отправлены на счет'
+            text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
         )
         job = scheduler.get_job(f'payment_{user_id}')
         if job:
@@ -31,6 +49,9 @@ async def check_payment(bot: Bot, user_id: int, session: DataInteraction, schedu
 
 
 async def stop_check_payment(user_id: int, scheduler: AsyncIOScheduler):
+    job = scheduler.get_job(f'payment_{user_id}')
+    if job:
+        job.remove()
     job = scheduler.get_job(f'stop_payment_{user_id}')
     if job:
         job.remove()

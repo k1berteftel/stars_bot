@@ -1,13 +1,13 @@
 from aiogram import Bot
-from aiogram.types import CallbackQuery, User, Message
+from aiogram.types import CallbackQuery, User, Message, ContentType
 from aiogram_dialog import DialogManager, ShowMode, StartMode
-from aiogram_dialog.api.entities import MediaAttachment
+from aiogram_dialog.api.entities import MediaAttachment, MediaId
 from aiogram_dialog.widgets.kbd import Button, Select
 from aiogram_dialog.widgets.input import ManagedTextInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from utils.schedulers import check_payment, stop_check_payment
-from utils.payment import get_crypto_payment_data, get_yookassa_payment_data
+from utils.payment import get_crypto_payment_data, get_card_payment_data, get_oxa_payment_data
 from database.action_data_class import DataInteraction
 from config_data.config import load_config, Config
 from states.state_groups import startSG
@@ -20,29 +20,61 @@ async def start_getter(event_from_user: User, **kwargs):
     admin = False
     if event_from_user.id in config.bot.admin_ids:
         admin = True
-    return {'admin': admin}
+    media = MediaId(file_id='AgACAgIAAxkBAAIBQGgaN21XHo8C0ui8X_vXVD_1dp9BAAJg8DEb9dvQSFW59oxus4LOAQADAgADeAADNgQ')
+    media = MediaAttachment(type=ContentType.PHOTO, file_id=media)
+    return {'admin': admin,
+            'media': media}
+
+
+async def rules_menu_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
+    text = ('<b>Политика использования</b>\nЦель магазина: Магазин предоставляет услуги по продаже звезд в Telegram.\n\n'
+            'Правила использования: Пользователи обязаны соблюдать все применимые законы и правила платформ,'
+            ' на которых они используют купленные звезды. Запрещены попытки обмана, мошенничество и другие '
+            'недопустимые действия.\n\nПрием платежей: Мы принимаем платежи через указанные методы, '
+            'обеспечивая безопасность и конфиденциальность ваших данных.\n\nОбязательства магазина:'
+            ' Магазин обязуется предоставить вам купленные звезды после успешной оплаты.\n\nОтветственность '
+            'пользователя: Вы несете ответственность за предоставление правильной информации при заказе услуги.'
+            ' Пользователи должны предоставить корректные данные для успешного выполнения заказа.\n\nЗапрещенные'
+            ' действия: Запрещены действия, направленные на мошенничество, включая попытки '
+            'возврата средств после получения услуги.\n\n<b>Политика возврата</b>\nУсловия возврата: Вы можете '
+            'запросить возврат средств, если не получили звезд. Нужны скрины оплаты и главной страницы бота.\n\n'
+            'Процедура возврата: Для запроса возврата, свяжитесь с нашей службой поддержки по указанным '
+            'контактным данным. Мы рассмотрим ваш запрос и произведем возврат средств на вашу карту/кошелек.\n\n'
+            'Сроки возврата: Вы получите средства в течение 3 рабочих дней.\n\n<b>Политика конфиденциальности</b>\n'
+            'Сбор информации: Мы можем собирать определенную информацию от пользователей для обработки заказов '
+            'и улучшения сервиса.\n\nИспользование информации: Мы обеспечиваем безопасное и конфиденциальное '
+            'хранение ваших данных. Информация будет использована исключительно для обработки заказов и '
+            'обратной связи с вами.\n\nРазглашение информации: Мы не раскроем вашу информацию третьим '
+            'лицам, за исключением случаев, предусмотренных законом или в случаях, когда это необходимо '
+            'для выполнения заказа (например, передача информации платежным системам).\n\nСогласие пользователя: '
+            'Используя наши услуги, вы соглашаетесь с нашей политикой конфиденциальности.')
+    return {'text': text}
 
 
 async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     bot: Bot = dialog_manager.middleware_data.get('bot')
-    amount = dialog_manager.dialog_data.get('amount')
+    stars = dialog_manager.dialog_data.get('amount')
     scheduler: AsyncIOScheduler = dialog_manager.middleware_data.get('scheduler')
     job = scheduler.get_job(f'payment_{event_from_user.id}')
     crypto_url = dialog_manager.dialog_data.get('crypto_url')
-    yookassa_url = dialog_manager.dialog_data.get('yookassa_url')
+    card_url = dialog_manager.dialog_data.get('card_url')
+    oxa_url = dialog_manager.dialog_data.get('oxa_url')
     if not job:
-        #yookassa_payment = await get_yookassa_payment_data(amount)
+        prices = await session.get_prices()
+        amount = int(round(int(stars / 0.81) / (1 - prices.charge / 100)))
+        card_payment = await get_card_payment_data(amount)
         crypto_payment = await get_crypto_payment_data(amount)
-        #dialog_manager.dialog_data['yookassa_url'] = yookassa_payment.get('url')
-        dialog_manager.dialog_data['yookassa_url'] = crypto_payment.get('url')
+        oxa_payment = await get_oxa_payment_data(amount)
+        dialog_manager.dialog_data['card_url'] = card_payment.get('url')
         dialog_manager.dialog_data['crypto_url'] = crypto_payment.get('url')
+        dialog_manager.dialog_data['oxa_url'] = oxa_payment.get('url')
         crypto_url = crypto_payment.get('url')
-        #yookassa_url = yookassa_payment.get('url')
-        yookassa_url = crypto_payment.get('url')
+        card_url = card_payment.get('url')
+        oxa_url = oxa_payment.get('url')
         username = dialog_manager.dialog_data.get('username')
         if not username:
-            username = '@' + event_from_user.username
+            username = event_from_user.username
         if not event_from_user.username:
             await bot.send_message(
                 chat_id=event_from_user.id,
@@ -55,7 +87,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
             check_payment,
             'interval',
             args=[bot, event_from_user.id, session, scheduler],
-            kwargs={'card_id': crypto_payment.get('id'), 'invoice_id': crypto_payment.get('id'), 'username': username},  # yookassa_payment.get('id')
+            kwargs={'card_id': card_payment.get('id'), 'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'), 'username': username, 'stars': stars},  # yookassa_payment.get('id')
             id=f'payment_{event_from_user.id}',
             seconds=5
         )
@@ -70,7 +102,8 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
             )
     return {
         'crypto_link': crypto_url,
-        'card_link': yookassa_url
+        'oxa_link': oxa_url,
+        'card_link': card_url
     }
 
 

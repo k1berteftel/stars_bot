@@ -5,6 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 class startSG(StatesGroup):
     start = State()
+    rules_menu = State()
     get_stars_amount = State()
     get_promo = State()
     payment_menu = State()

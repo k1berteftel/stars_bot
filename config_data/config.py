@@ -29,9 +29,18 @@ class CryptoBot:
 
 
 @dataclass
-class YooKassa:
-    account_id: str
+class Lava:
     secret_key: str
+
+
+@dataclass
+class Fragment:
+    api_key: str
+
+
+@dataclass
+class Oxa:
+    api_key: str
 
 
 @dataclass
@@ -40,7 +49,9 @@ class Config:
     db: DB
     nats: NatsConfig
     crypto_bot: CryptoBot
-    yookassa: YooKassa
+    fragment: Fragment
+    oxa: Oxa
+    lava: Lava
 
 
 def load_config(path: str | None = None) -> Config:
@@ -61,8 +72,13 @@ def load_config(path: str | None = None) -> Config:
         crypto_bot=CryptoBot(
             token=env('crypto_token')
         ),
-        yookassa=YooKassa(
-            account_id=env('account_id'),
+        fragment=Fragment(
+            api_key=env('fragment_api_key')
+        ),
+        oxa=Oxa(
+            api_key=env('oxa_api_key')
+        ),
+        lava=Lava(
             secret_key=env('secret_key')
         )
     )

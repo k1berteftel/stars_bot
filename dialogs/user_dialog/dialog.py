@@ -10,16 +10,25 @@ from states.state_groups import startSG, adminSG
 
 user_dialog = Dialog(
     Window(
+        DynamicMedia('media'),
         Const('<b>✨ Добро пожаловать!</b>\n\n'
               'Здесь можно приобрести Telegram звезды без верификации KYC и дешевле чем в приложении.'),
         Column(
             SwitchTo(Const('⭐️Купить звезды'), id='get_stars_amount_switcher', state=startSG.get_stars_amount),
             SwitchTo(Const('🎁Подарок другу'), id='get_username_switcher', state=startSG.get_username),
             SwitchTo(Const('👤Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu),
+            SwitchTo(Const('📋Правила'), id='rules_menu_switcher', state=startSG.rules_menu),
+            Url(Const('📩Поддержка'), id='support_url', url=Const('https://t.me/TrustStarsHelp')),
             Start(Const('Админ панель'), id='admin', state=adminSG.start, when='admin')
         ),
         getter=getters.start_getter,
         state=startSG.start
+    ),
+    Window(
+        Format('{text}'),
+        SwitchTo(Const('🔙Назад'), id='back', state=startSG.start),
+        getter=getters.rules_menu_getter,
+        state=startSG.rules_menu
     ),
     Window(
         Const('⭐️Отправьте количество звезд, которое вы хотели бы приобрести <em>(минимум 50)</em>'),
@@ -43,7 +52,8 @@ user_dialog = Dialog(
     Window(
         Const('Выберите способ оплаты\n\n<em>❗️Счет будет действителен 30 минут</em>'),
         Column(
-            Url(Const('💲Крипта'), id='crypto_url', url=Format('{crypto_link}')),
+            Url(Const('💲Crypto Bot'), id='crypto_url', url=Format('{crypto_link}')),
+            Url(Const('💵Крипта / USDT'), id='oxa_url', url=Format('{oxa_link}')),
             Url(Const('💳Карта'), id='card_url', url=Format('{card_link}')),
         ),
         Button(Const('❌Закрыть меню'), id='close_payment', on_click=getters.close_payment),

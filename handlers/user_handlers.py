@@ -42,3 +42,8 @@ async def start_dialog(msg: Message, dialog_manager: DialogManager, session: Dat
         except Exception:
             ...
     await dialog_manager.start(state=startSG.start, mode=StartMode.RESET_STACK)
+
+
+#@user_router.message()
+#async def get_photo_id(msg: Message):
+    #await msg.reply(msg.photo[-1].file_id)

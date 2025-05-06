@@ -15,6 +15,7 @@ from storage.nats_storage import NatsStorage
 from utils.nats_connect import connect_to_nats
 from database.build import PostgresBuild
 from database.model import Base
+from database.action_data_class import setup_database
 from config_data.config import load_config, Config
 from handlers.user_handlers import user_router
 from dialogs import get_dialogs
@@ -48,6 +49,7 @@ async def main():
     #await database.drop_tables(Base)
     #await database.create_tables(Base)
     session = database.session()
+    #await setup_database(session)
 
     scheduler: AsyncIOScheduler = AsyncIOScheduler()
     scheduler.start()

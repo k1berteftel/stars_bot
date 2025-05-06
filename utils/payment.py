@@ -1,63 +1,90 @@
+import asyncio
+import json
 import uuid
 import re
 import lxml
+import hashlib
+import hmac
 
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
-from yookassa import Configuration, Payment
-from yookassa.payment import PaymentResponse
 from aiocryptopay import AioCryptoPay, Networks
 
+from utils.build_ids import get_random_id
 from config_data.config import Config, load_config
 
 
 config: Config = load_config()
 
-Configuration.account_id = config.yookassa.account_id
-Configuration.secret_key = config.yookassa.secret_key
-
+secret_key = config.lava.secret_key
+merchant_api_key = config.oxa.api_key
 crypto_bot = AioCryptoPay(token=config.crypto_bot.token, network=Networks.MAIN_NET)
 
 
-async def get_yookassa_payment_data(price: int) -> dict:
-    payment = await Payment.create({
-        "amount": {
-            "value": str(float(price)),
-            "currency": "RUB"
-        },
-        "confirmation": {
-            "type": "redirect",
-            "return_url": "https://t.me/AidaLook_bot"
-        },
-        "receipt": {
-            "customer": {
-                "email": "kkulis985@gmail.com"
-            },
-            'items': [
-                {
-                    'description': "Покупка звезд",
-                    "amount": {
-                        "value": str(float(price)),
-                        "currency": "RUB"
-                    },
-                    'vat_code': 1,
-                    'quantity': 1
-                }
-            ]
-        },
-        "capture": True,
-        "description": "Покупка звезд"
-    }, uuid.uuid4())
-    url = payment.confirmation.confirmation_url
+def _add_signature(data: dict) -> str:
+    data = dict(sorted(data.items(), key=lambda x: x[0]))
+    sign = hmac.new(bytes(secret_key, 'utf-8'), json.dumps(data).encode('utf-8'), hashlib.sha256).hexdigest()
+    return sign
+
+
+async def get_card_payment_data(price: int) -> dict | bool:
+    headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        'sum': float(price),
+        'orderId': get_random_id(),
+        'shopId': '9262f0d1-9aa6-4a7b-b4fb-38fe93779454',
+        'includeService': ['card']
+    }
+    data = dict(sorted(data.items(), key=lambda x: x[0]))
+    sign = _add_signature(data)
+    headers['Signature'] = sign
+    async with ClientSession() as session:
+        async with session.post('https://api.lava.ru/business/invoice/create', json=data, headers=headers) as resp:
+            if resp.status != 200:
+                print(await resp.json())
+                print(resp.status)
+                return False
+            data = await resp.json()
+            print(data)
     return {
-        'url': url,
-        'id': payment.id
+        'id': data['data']['id'],
+        'url': data['data']['url']
     }
 
 
-async def get_crypto_payment_data(price: int):
+async def get_oxa_payment_data(amount: int):
+    url = 'https://api.oxapay.com/v1/payment/invoice'
     course = await _get_usdt_rub()
-    price = round(price / course, 2)
+
+    price = round(amount / course, 2)
+    headers = {
+        'merchant_api_key': merchant_api_key,
+        'Content-Type': 'application/json'
+    }
+    data = {
+        'amount': float(price),
+        'mixed_payment': False
+    }
+    async with ClientSession() as session:
+        async with session.post(url, json=data, headers=headers) as resp:
+            if resp.status != 200:
+                print(await resp.json())
+                print(resp.status)
+            data = await resp.json()
+            print(data)
+    return {
+        'url': data['data']['payment_url'],
+        'id': data['data']['track_id']
+    }
+
+
+async def get_crypto_payment_data(amount: int):
+    course = await _get_usdt_rub()
+
+    price = round(amount / course, 2)
     invoice = await crypto_bot.create_invoice(asset='USDT', amount=price)
     return {
         'url': invoice.mini_app_invoice_url,
@@ -65,14 +92,49 @@ async def get_crypto_payment_data(price: int):
     }
 
 
-async def check_yookassa_payment(payment_id: int):
-    payment: PaymentResponse = await Payment.find_one(payment_id)
-    if payment.paid:
+async def check_card_payment(id: str) -> bool:
+    headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        'shopId': '9262f0d1-9aa6-4a7b-b4fb-38fe93779454',
+        'orderId': get_random_id(),
+        'invoiceId': id
+    }
+    data = dict(sorted(data.items(), key=lambda x: x[0]))
+    sign = _add_signature(data)
+    headers['Signature'] = sign
+    async with ClientSession() as session:
+        async with session.post('https://api.lava.ru/business/invoice/status', json=data, headers=headers) as resp:
+            if resp.status != 200:
+                print(await resp.json())
+                print(resp.status)
+                return False
+            data = await resp.json()
+    if data['data']['status'] == '??':
         return True
     return False
 
 
-async def check_crypto_payment(invoice_id: int):
+async def check_oxa_payment(track_id: str) -> bool:
+    url = 'https://api.oxapay.com/v1/payment/' + track_id
+    headers = {
+        'merchant_api_key': merchant_api_key,
+        'Content-Type': 'application/json'
+    }
+    async with ClientSession() as session:
+        async with session.get('https://api.lava.ru/business/invoice/status', headers=headers) as resp:
+            if resp.status != 200:
+                print(await resp.json())
+                return False
+            data = await resp.json()
+    if data['data']['status'] == 'completed':
+        return True
+    return False
+
+
+async def check_crypto_payment(invoice_id: int) -> bool:
     invoice = await crypto_bot.get_invoices(invoice_ids=invoice_id)
     if invoice.status == 'paid':
         return True
@@ -87,3 +149,6 @@ async def _get_usdt_rub() -> float:
             price = soup.find('div', class_='chart__subtitle').text.strip()
             value = re.search(r'\d+,\d+', price)
             return float(price[value.start():value.end():].replace(',', '.'))
+
+
+#asyncio.run(get_oxa_payment_data(500))
