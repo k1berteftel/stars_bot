@@ -131,7 +131,7 @@ admin_dialog = Dialog(
               '⚠️ Ссылка одноразовая и предназначена для добавления только одного админа'),
         Column(
             Url(Const('🔗 Добавить админа (ссылка)'), id='add_admin',
-                url=Format('http://t.me/share/url?url=https://t.me/bot?start={id}')),  # поменять ссылку
+                url=Format('http://t.me/share/url?url=https://t.me/TrustStarsBot?start={id}')),  # поменять ссылку
             Button(Const('🔄 Создать новую ссылку'), id='new_link_create', on_click=getters.refresh_url),
             SwitchTo(Const('🔙 Назад'), id='back_admin_menu', state=adminSG.admin_menu)
         ),

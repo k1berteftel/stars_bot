@@ -108,7 +108,7 @@ async def check_card_payment(id: str) -> bool:
     async with ClientSession() as session:
         async with session.post('https://api.lava.ru/business/invoice/status', json=data, headers=headers) as resp:
             if resp.status != 200:
-                print(await resp.json())
+                print('card check error', await resp.json())
                 print(resp.status)
                 return False
             data = await resp.json()
@@ -124,12 +124,13 @@ async def check_oxa_payment(track_id: str) -> bool:
         'Content-Type': 'application/json'
     }
     async with ClientSession() as session:
-        async with session.get('https://api.lava.ru/business/invoice/status', headers=headers) as resp:
+        async with session.get(url, headers=headers) as resp:
             if resp.status != 200:
-                print(await resp.json())
+                print('oxa check error', await resp.json())
                 return False
             data = await resp.json()
-    if data['data']['status'] == 'completed':
+            print(data)
+    if data['data']['status'] == 'paid':
         return True
     return False
 
@@ -151,4 +152,4 @@ async def _get_usdt_rub() -> float:
             return float(price[value.start():value.end():].replace(',', '.'))
 
 
-#asyncio.run(get_oxa_payment_data(500))
+#print(asyncio.run(check_oxa_payment('178506547')))

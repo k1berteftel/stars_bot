@@ -11,25 +11,27 @@ config: Config = load_config()
 
 
 async def transfer_stars(username: str, stars: int) -> bool:
-    url = "https://tg.parssms.info/v1/stars/payment"
+    url = "https://tg2.parssms.info/v1/stars/payment"
     data = {
         "query": username,
-        "quantity": stars
+        "quantity": str(stars)
     }
     headers = {
         'Content-Type': 'application/json',
         'api-key': config.fragment.api_key
     }
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=data, headers=headers) as resp:
-            if resp.status != 200:
-                print(resp.content)
+        async with session.post(url, json=data, headers=headers, ssl=False) as resp:
+            print(resp.status)
+            if resp.status not in [200, 201]:
+                print(await resp.json())
                 return False
             data = await resp.json()
-            content = await resp.text()
+            if data['ok'] != True:
+                return False
             print(data)
     return True
 
 
 
-#asyncio.run(transfer_stars())
+#print(asyncio.run(transfer_stars('farion', 50)))

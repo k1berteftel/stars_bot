@@ -21,7 +21,7 @@ async def check_payment(bot: Bot, user_id: int, session: DataInteraction, schedu
         # Отправить токены
         username = kwargs.get('username')
         stars = kwargs.get('stars')
-        status = transfer_stars(username, stars)
+        status = await transfer_stars(username, stars)
         if not status:
             await bot.send_message(
                 chat_id=user_id,
