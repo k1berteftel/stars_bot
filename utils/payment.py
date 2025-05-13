@@ -36,7 +36,7 @@ async def get_card_payment_data(price: int) -> dict | bool:
         'sum': float(price),
         'orderId': get_random_id(),
         'shopId': '9262f0d1-9aa6-4a7b-b4fb-38fe93779454',
-        'includeService': ['card']
+        'includeService': ['sbp']
     }
     data = dict(sorted(data.items(), key=lambda x: x[0]))
     sign = _add_signature(data)
@@ -112,7 +112,8 @@ async def check_card_payment(id: str) -> bool:
                 print(resp.status)
                 return False
             data = await resp.json()
-    if data['data']['status'] == '??':
+            print(data)
+    if data['data']['status'] == 'success':
         return True
     return False
 
@@ -152,4 +153,4 @@ async def _get_usdt_rub() -> float:
             return float(price[value.start():value.end():].replace(',', '.'))
 
 
-#print(asyncio.run(check_oxa_payment('178506547')))
+print(asyncio.run(check_card_payment('14069cbc-a805-43e3-85d3-a88980347646')))
