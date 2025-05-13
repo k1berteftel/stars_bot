@@ -153,4 +153,4 @@ async def _get_usdt_rub() -> float:
             return float(price[value.start():value.end():].replace(',', '.'))
 
 
-print(asyncio.run(check_card_payment('14069cbc-a805-43e3-85d3-a88980347646')))
+#print(asyncio.run(check_card_payment('14069cbc-a805-43e3-85d3-a88980347646')))

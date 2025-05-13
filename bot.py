@@ -19,6 +19,7 @@ from database.action_data_class import setup_database
 from config_data.config import load_config, Config
 from handlers.user_handlers import user_router
 from dialogs import get_dialogs
+from utils.payment import _get_usdt_rub
 from middlewares import TransferObjectsMiddleware, RemindMiddleware
 
 
