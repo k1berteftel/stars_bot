@@ -49,7 +49,8 @@ class DataInteraction():
                 user_id=user_id,
                 username=username,
                 name=name,
-                referral=referral
+                referral=referral,
+                entry=datetime.datetime.now()
             ))
             await session.commit()
 
