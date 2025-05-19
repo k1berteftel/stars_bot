@@ -54,7 +54,7 @@ async def run_aiogram():
     #await database.drop_tables(Base)
     #await database.create_tables(Base)
     session = database.session()
-    await setup_database(session)
+    #await setup_database(session)
 
     scheduler: AsyncIOScheduler = AsyncIOScheduler()
     scheduler.start()
@@ -105,8 +105,8 @@ async def run_uvicorn():
 
 async def main():
     await asyncio.gather(
-        run_aiogram(),
-        run_uvicorn()
+        run_uvicorn(),
+        run_aiogram()
     )
 
 

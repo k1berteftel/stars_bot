@@ -9,9 +9,9 @@ from database.model import (UsersTable, DeeplinksTable, OneTimeLinksIdsTable, Ad
 
 async def setup_database(session: async_sessionmaker):
     async with session() as session:
-        #await session.execute(insert(PricesTable).values(
-            #charge=15
-        #))
+        await session.execute(insert(PricesTable).values(
+            charge=15
+        ))
         await session.execute(insert(StaticsTable).values(
             payments=0
         ))
