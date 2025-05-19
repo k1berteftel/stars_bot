@@ -50,11 +50,14 @@ user_dialog = Dialog(
         state=startSG.get_promo
     ),
     Window(
-        Const('Выберите способ оплаты\n\n<em>❗️Счет будет действителен 30 минут</em>'),
+        Format('<b>Номер заказа</b>: <code>{uid_key}</code>\n\n<b>Сумма к оплате</b>: <code>{rub}₽ ({usdt}$)</code>\n'
+               '<b>Вы покупаете</b>: <code>{amount} звезд</code>\n<b>Получатель</b>: <code>{username}</code>\n'),
+        Const('<em>❗️Счет будет действителен 30 минут</em>'),
         Column(
             Url(Const('💲Crypto Bot'), id='crypto_url', url=Format('{crypto_link}')),
             Url(Const('💵Крипта / USDT'), id='oxa_url', url=Format('{oxa_link}')),
-            Url(Const('💳Карта'), id='card_url', url=Format('{card_link}')),
+            Url(Const('💶СБП'), id='sbp_url', url=Format('{sbp_link}')),
+            Url(Const('💳Карта'), id='card_url', url=Format('{card_link}'))
         ),
         Button(Const('❌Закрыть меню'), id='close_payment', on_click=getters.close_payment),
         getter=getters.payment_menu_getter,

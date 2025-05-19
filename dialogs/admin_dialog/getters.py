@@ -40,10 +40,11 @@ async def get_static(clb: CallbackQuery, widget: Button, dialog_manager: DialogM
                     entry['2_day_ago'] = entry.get('2_day_ago') + 1
         if user.activity.timestamp() > (datetime.datetime.today() - datetime.timedelta(days=1)).timestamp():
             activity += 1
-
+    statistic = await session.get_statistics()
     text = (f'<b>Статистика на {datetime.datetime.today().strftime("%d-%m-%Y")}</b>\n\nВсего пользователей: {len(users)}'
             f'\n - Активные пользователи(не заблокировали бота): {active}\n - Пользователей заблокировали '
-            f'бота: {len(users) - active}\n - Провзаимодействовали с ботом за последние 24 часа: {activity}\n\n'
+            f'бота: {len(users) - active}\n - Провзаимодействовали с ботом за последние 24 часа: {activity}\n'
+            f'Всего покупок: {statistic.payments}\n\n'
             f'<b>Прирост аудитории:</b>\n - За сегодня: +{entry.get("today")}\n - Вчера: +{entry.get("yesterday")}'
             f'\n - Позавчера: + {entry.get("2_day_ago")}')
     await clb.message.answer(text=text)
@@ -62,6 +63,48 @@ async def get_users_txt(clb: CallbackQuery, widget: Button, dialog_manager: Dial
         os.remove('users.txt')
     except Exception:
         ...
+
+
+async def get_app_uid(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
+    try:
+        uid_key = int(text)
+    except Exception:
+        await msg.delete()
+        await msg.answer('Номер заказа должен быть числом, пожалуйста попробуйте еще раз')
+        return
+    session: DataInteraction = dialog_manager.middleware_data.get('session')
+    application = await session.get_application(uid_key)
+    if not application:
+        await msg.answer('Заказа с таким номером не найдено')
+        return
+    dialog_manager.dialog_data['uid_key'] = application.uid_key
+    await dialog_manager.switch_to(adminSG.application_menu)
+
+
+async def application_menu_getter(dialog_manager: DialogManager, **kwargs):
+    session: DataInteraction = dialog_manager.middleware_data.get('session')
+    uid_key = dialog_manager.dialog_data.get('uid_key')
+    application = await session.get_application(uid_key)
+    user = await session.get_user(application.user_id)
+    statuses = {
+        0: 'Не оплачен',
+        1: 'В процессе выполнения',
+        2: 'Оплачен',
+        3: 'Ошибка выполнения'
+    }
+    payments = {
+        None: 'Не оплачен',
+        'sbp': 'СБП (lava)',
+        'card': 'Карта (Wata)',
+        'crypto': 'Крипта (Oxa pay)',
+        'crypto_bot': 'Криптобот'
+    }
+    text = (f'<b>Номер заказа</b>: {application.uid_key}\n<b>Создал</b>: {application.user_id} (@{user.username})'
+            f'\n<b>Получатель</b>: @{application.receiver}\n<b>Сумма</b>: {application.amount} звезд\n'
+            f'<b>Стоимость</b>: {float(application.rub)}₽ ({application.usdt}$)\n<b>Статус заказа</b>: {statuses[application.status]}'
+            f'\n<b>Статус оплаты</b>: {payments[application.payment]}'
+            f'\n<b>Дата создания</b>: {application.create.strftime("%Y-%m-%d %H:%M:%S")}')
+    return {'text': text}
 
 
 async def charge_menu_getter(dialog_manager: DialogManager, **kwargs):

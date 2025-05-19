@@ -32,3 +32,5 @@ class adminSG(StatesGroup):
     get_limit = State()
     get_percent = State()
     charge_menu = State()
+    get_app_uid = State()
+    application_menu = State()

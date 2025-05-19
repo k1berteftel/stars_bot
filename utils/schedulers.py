@@ -9,24 +9,34 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 from .transactions import transfer_stars
-from .payment import check_crypto_payment, check_card_payment, check_oxa_payment
+from .payment import check_crypto_payment, check_card_payment, check_oxa_payment, check_wata_payment
 from database.action_data_class import DataInteraction
 
 
-async def check_payment(bot: Bot, user_id: int, session: DataInteraction, scheduler: AsyncIOScheduler, **kwargs):
+async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataInteraction, scheduler: AsyncIOScheduler, **kwargs):
     invoice_id = kwargs.get('invoice_id')
-    card_id = kwargs.get('card_id')
+    sbp_id = kwargs.get('sbp_id')
     track_id = kwargs.get('track_id')
-    if await check_crypto_payment(invoice_id) or await check_card_payment(card_id) or await check_oxa_payment(track_id):
-        # Отправить токены
+    crypto_bot = await check_crypto_payment(invoice_id)
+    sbp = await check_card_payment(sbp_id)
+    crypto = await check_oxa_payment(track_id)
+    if crypto_bot or sbp or crypto:
         username = kwargs.get('username')
         stars = kwargs.get('stars')
         status = await transfer_stars(username, stars)
+        payment = ''
+        if crypto_bot:
+            payment = 'crypto_bot'
+        if sbp:
+            payment = 'sbp'
+        if crypto:
+            payment = 'crypto'
         if not status:
             await bot.send_message(
                 chat_id=user_id,
                 text='🚨Во время начисления звезд что-то пошло не так, пожалуйста обратитесь в поддержку'
             )
+            await session.update_application(app_id, 3, payment)
             job = scheduler.get_job(f'payment_{user_id}')
             if job:
                 job.remove()
@@ -38,6 +48,7 @@ async def check_payment(bot: Bot, user_id: int, session: DataInteraction, schedu
             chat_id=user_id,
             text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
         )
+        await session.update_application(app_id, 2, payment)
         job = scheduler.get_job(f'payment_{user_id}')
         if job:
             job.remove()
@@ -48,7 +59,8 @@ async def check_payment(bot: Bot, user_id: int, session: DataInteraction, schedu
     return
 
 
-async def stop_check_payment(user_id: int, scheduler: AsyncIOScheduler):
+async def stop_check_payment(user_id: int, app_id: int, session: DataInteraction, scheduler: AsyncIOScheduler):
+    await session.update_application(app_id, 0, None)
     job = scheduler.get_job(f'payment_{user_id}')
     if job:
         job.remove()
@@ -105,4 +117,11 @@ async def send_messages(bot: Bot, session: DataInteraction, keyboard: InlineKeyb
                 except Exception as err:
                     print(err)
                     await session.set_active(user.user_id, 0)
+
+
+async def clean_applications(session: DataInteraction):
+    today = (datetime.today() - timedelta(days=3)).timestamp()
+    for application in await session.get_applications():
+        if application.create.timestamp() <= today:
+            await session.del_application(application.uid_key)
 

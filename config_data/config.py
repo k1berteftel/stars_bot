@@ -44,6 +44,11 @@ class Oxa:
 
 
 @dataclass
+class Wata:
+    api_key: str
+
+
+@dataclass
 class Config:
     bot: tg_bot
     db: DB
@@ -52,6 +57,7 @@ class Config:
     fragment: Fragment
     oxa: Oxa
     lava: Lava
+    wata: Wata
 
 
 def load_config(path: str | None = None) -> Config:
@@ -80,5 +86,8 @@ def load_config(path: str | None = None) -> Config:
         ),
         lava=Lava(
             secret_key=env('secret_key')
+        ),
+        wata=Wata(
+            api_key=env('wata_api_key')
         )
     )

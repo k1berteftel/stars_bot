@@ -27,6 +27,29 @@ def _add_signature(data: dict) -> str:
     return sign
 
 
+async def get_wata_payment_data(user_id: int, price: int) -> dict | bool:
+    headers = {
+        'Authorization': f'Bearer {config.wata.api_key}',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        "amount": float(price),
+        "currency": "RUB",
+        "orderId": str(user_id)
+    }
+    async with ClientSession() as session:
+        async with session.post('https://api.wata.pro/api/h2h/links', json=data, headers=headers) as resp:
+            if resp.status != 200:
+                print(await resp.json())
+                print(resp.status)
+                return False
+            data = await resp.json()
+    return {
+        'id': data['id'],
+        'url': data['url']
+    }
+
+
 async def get_card_payment_data(price: int) -> dict | bool:
     headers = {
         'Accept': 'application/json',
@@ -48,24 +71,20 @@ async def get_card_payment_data(price: int) -> dict | bool:
                 print(resp.status)
                 return False
             data = await resp.json()
-            print(data)
     return {
         'id': data['data']['id'],
         'url': data['data']['url']
     }
 
 
-async def get_oxa_payment_data(amount: int):
+async def get_oxa_payment_data(amount: int | float):
     url = 'https://api.oxapay.com/v1/payment/invoice'
-    course = await _get_usdt_rub()
-
-    price = round(amount / course, 2)
     headers = {
         'merchant_api_key': merchant_api_key,
         'Content-Type': 'application/json'
     }
     data = {
-        'amount': float(price),
+        'amount': float(amount),
         'mixed_payment': False
     }
     async with ClientSession() as session:
@@ -74,18 +93,14 @@ async def get_oxa_payment_data(amount: int):
                 print(await resp.json())
                 print(resp.status)
             data = await resp.json()
-            print(data)
     return {
         'url': data['data']['payment_url'],
         'id': data['data']['track_id']
     }
 
 
-async def get_crypto_payment_data(amount: int):
-    course = await _get_usdt_rub()
-
-    price = round(amount / course, 2)
-    invoice = await crypto_bot.create_invoice(asset='USDT', amount=price)
+async def get_crypto_payment_data(amount: int | float):
+    invoice = await crypto_bot.create_invoice(asset='USDT', amount=amount)
     return {
         'url': invoice.mini_app_invoice_url,
         'id': invoice.invoice_id
@@ -112,7 +127,6 @@ async def check_card_payment(id: str) -> bool:
                 print(resp.status)
                 return False
             data = await resp.json()
-            print(data)
     if data['data']['status'] == 'success':
         return True
     return False
@@ -130,7 +144,6 @@ async def check_oxa_payment(track_id: str) -> bool:
                 print('oxa check error', await resp.json())
                 return False
             data = await resp.json()
-            print(data)
     if data['data']['status'] == 'paid':
         return True
     return False
@@ -139,6 +152,25 @@ async def check_oxa_payment(track_id: str) -> bool:
 async def check_crypto_payment(invoice_id: int) -> bool:
     invoice = await crypto_bot.get_invoices(invoice_ids=invoice_id)
     if invoice.status == 'paid':
+        return True
+    return False
+
+
+async def check_wata_payment(id: str):
+    url = f'https://api.wata.pro/api/h2h/links/{id}'
+    print(url)
+    headers = {
+        'Authorization': f'Bearer {config.wata.api_key}',
+        'Content-Type': 'application/json'
+    }
+    async with ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            if resp.status != 200:
+                print(resp.status)
+                print('wata check error', await resp.json())
+                return False
+            data = await resp.json()
+    if data['status'] == 'Closed':
         return True
     return False
 
@@ -153,4 +185,4 @@ async def _get_usdt_rub() -> float:
             return float(price[value.start():value.end():].replace(',', '.'))
 
 
-#print(asyncio.run(check_card_payment('14069cbc-a805-43e3-85d3-a88980347646')))
+#print(asyncio.run(check_wata_payment('3a19f00f-819b-71cc-799f-c57af7076efb')))

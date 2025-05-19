@@ -15,6 +15,7 @@ admin_dialog = Dialog(
         Column(
             Button(Const('📊 Получить статистику'), id='get_static', on_click=getters.get_static),
             SwitchTo(Const('🛫Сделать рассылку'), id='mailing_menu_switcher', state=adminSG.get_mail),
+            SwitchTo(Const('Найти заказ'), id='get_app_uid_switcher', state=adminSG.get_app_uid),
             SwitchTo(Const('🔗 Управление диплинками'), id='deeplinks_menu_switcher', state=adminSG.deeplink_menu),
             SwitchTo(Const('Управление промокодами'), id='promos_menu_switcher', state=adminSG.promos_menu),
             SwitchTo(Const('👥 Управление админами'), id='admin_menu_switcher', state=adminSG.admin_menu),
@@ -23,6 +24,21 @@ admin_dialog = Dialog(
         ),
         Cancel(Const('Назад'), id='close_admin'),
         state=adminSG.start
+    ),
+    Window(
+        Const('Введите номер заказа'),
+        TextInput(
+            id='get_app_uid',
+            on_success=getters.get_app_uid
+        ),
+        SwitchTo(Const('🔙 Назад'), id='back', state=adminSG.start),
+        state=adminSG.get_app_uid
+    ),
+    Window(
+        Format('<b>Данные по заказу</b>\n\n{text}'),
+        SwitchTo(Const('🔙 Назад'), id='back_get_app_uid', state=adminSG.get_app_uid),
+        getter=getters.application_menu_getter,
+        state=adminSG.application_menu
     ),
     Window(
         Format('<b>Действующая наценка к курсу звезд: {charge}%</b>\n\n'

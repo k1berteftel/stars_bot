@@ -1,15 +1,19 @@
 import datetime
 
-from sqlalchemy import select, insert, update, column, text, delete, and_
+from sqlalchemy import select, insert, update, column, text, delete, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from database.model import (UsersTable, DeeplinksTable, OneTimeLinksIdsTable, AdminsTable, PromosTable, UserPromoTable, PricesTable)
+from database.model import (UsersTable, DeeplinksTable, OneTimeLinksIdsTable, AdminsTable, PromosTable,
+                            UserPromoTable, PricesTable, ApplicationsTable, StaticsTable)
 
 
 async def setup_database(session: async_sessionmaker):
     async with session() as session:
         await session.execute(insert(PricesTable).values(
             charge=15
+        ))
+        await session.execute(insert(StaticsTable).values(
+            payments=0
         ))
         await session.commit()
 
@@ -54,6 +58,13 @@ class DataInteraction():
             ))
             await session.commit()
 
+    async def add_payment(self):
+        async with self._sessions() as session:
+            await session.execute(update(StaticsTable).values(
+                payments=StaticsTable.payments + 1
+            ))
+            await session.commit()
+
     async def add_refs(self, user_id: int):
         async with self._sessions() as session:
             await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
@@ -90,6 +101,25 @@ class DataInteraction():
             ))
             await session.commit()
 
+    async def add_application(self, user_id: int, receiver: str,
+                              amount: int, rub: int, usdt: float, count=1) -> ApplicationsTable:
+        applications = await self.get_applications()
+        uid_key = applications[-1].uid_key + count if applications else 1000
+        async with self._sessions() as session:
+            try:
+                await session.execute(insert(ApplicationsTable).values(
+                    uid_key=uid_key,
+                    user_id=user_id,
+                    receiver=receiver,
+                    amount=amount,
+                    rub=rub,
+                    usdt=usdt
+                ))
+                await session.commit()
+            except Exception:
+                return await self.add_application(user_id, receiver, amount, rub, usdt, count+1)
+            return await self.get_application(uid_key)
+
     async def add_promo(self, promo: str, limit: int, percent: int):
         async with self._sessions() as session:
             await session.execute(insert(PromosTable).values(
@@ -107,6 +137,22 @@ class DataInteraction():
             ))
             await session.commit()
 
+    async def get_applications(self):
+        async with self._sessions() as session:
+            result = await session.scalars(select(ApplicationsTable).order_by(ApplicationsTable.uid_key))
+        return result.fetchall()
+
+    async def get_application(self, uid_key: int):
+        async with self._sessions() as session:
+            result = await session.scalar(select(ApplicationsTable).where(ApplicationsTable.uid_key == uid_key))
+        return result
+
+    async def get_last_application(self, user_id: int):
+        async with self._sessions() as session:
+            result = await session.scalar(select(ApplicationsTable).where(ApplicationsTable.user_id == user_id)
+                                          .order_by(ApplicationsTable.create.desc()))
+        return result
+
     async def get_promos(self):
         async with self._sessions() as session:
             result = await session.scalars(select(PromosTable))
@@ -121,6 +167,11 @@ class DataInteraction():
                 )
             ))
         return result if result else False
+
+    async def get_statistics(self):
+        async with self._sessions() as session:
+            result = await session.scalar(select(StaticsTable))
+        return result
 
     async def get_users(self):
         async with self._sessions() as session:
@@ -151,6 +202,14 @@ class DataInteraction():
         async with self._sessions() as session:
             result = await session.scalar(select(PricesTable))
         return result
+
+    async def update_application(self, uid_key: int, status: int, payment: str | None):
+        async with self._sessions() as session:
+            await session.execute(update(ApplicationsTable).where(ApplicationsTable.uid_key == uid_key).values(
+                status=status,
+                payment=payment
+            ))
+            await session.commit()
 
     async def set_charge(self, charge: int):
         async with self._sessions() as session:
@@ -186,6 +245,11 @@ class DataInteraction():
     async def del_promo(self, id: int):
         async with self._sessions() as session:
             await session.execute(delete(PromosTable).where(PromosTable.id == id))
+            await session.commit()
+
+    async def del_application(self, uid_key: int):
+        async with self._sessions() as session:
+            await session.execute(delete(ApplicationsTable).where(ApplicationsTable.uid_key == uid_key))
             await session.commit()
 
     async def del_admin(self, user_id: int):

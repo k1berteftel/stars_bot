@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.input import ManagedTextInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from utils.schedulers import check_payment, stop_check_payment
-from utils.payment import get_crypto_payment_data, get_card_payment_data, get_oxa_payment_data
+from utils.payment import get_crypto_payment_data, get_card_payment_data, get_oxa_payment_data, _get_usdt_rub, get_wata_payment_data
 from database.action_data_class import DataInteraction
 from config_data.config import load_config, Config
 from states.state_groups import startSG
@@ -58,20 +58,25 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     scheduler: AsyncIOScheduler = dialog_manager.middleware_data.get('scheduler')
     job = scheduler.get_job(f'payment_{event_from_user.id}')
     crypto_url = dialog_manager.dialog_data.get('crypto_url')
-    card_url = dialog_manager.dialog_data.get('card_url')
+    sbp_url = dialog_manager.dialog_data.get('sbp_url')
     oxa_url = dialog_manager.dialog_data.get('oxa_url')
+    card_url = dialog_manager.dialog_data.get('card_url')
     if not job:
         prices = await session.get_prices()
         amount = int(round((stars * 1.21) / (1 - prices.charge / 100)))
-        card_payment = await get_card_payment_data(amount)
-        crypto_payment = await get_crypto_payment_data(amount)
-        oxa_payment = await get_oxa_payment_data(amount)
-        dialog_manager.dialog_data['card_url'] = card_payment.get('url')
+        usdt = round(amount / (await _get_usdt_rub()), 2)
+        sbp_payment = await get_card_payment_data(amount)
+        crypto_payment = await get_crypto_payment_data(usdt)
+        oxa_payment = await get_oxa_payment_data(usdt)
+        card_payment = await get_wata_payment_data(event_from_user.id, amount)
+        dialog_manager.dialog_data['sbp_url'] = sbp_payment.get('url')
         dialog_manager.dialog_data['crypto_url'] = crypto_payment.get('url')
         dialog_manager.dialog_data['oxa_url'] = oxa_payment.get('url')
+        dialog_manager.dialog_data['card_url'] = card_payment.get('url')
         crypto_url = crypto_payment.get('url')
-        card_url = card_payment.get('url')
+        sbp_url = sbp_payment.get('url')
         oxa_url = oxa_payment.get('url')
+        card_url = card_payment.get('url')
         username = dialog_manager.dialog_data.get('username')
         if not username:
             username = event_from_user.username
@@ -83,32 +88,44 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
             dialog_manager.dialog_data.clear()
             await dialog_manager.switch_to(startSG.start)
             return
+        application = await session.add_application(event_from_user.id, username, stars, amount, usdt)
+        dialog_manager.dialog_data['uid_key'] = application.uid_key
         scheduler.add_job(
             check_payment,
             'interval',
-            args=[bot, event_from_user.id, session, scheduler],
-            kwargs={'card_id': card_payment.get('id'), 'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'), 'username': username, 'stars': stars},  # yookassa_payment.get('id')
+            args=[bot, event_from_user.id, application.uid_key, session, scheduler],
+            kwargs={'sbp_id': sbp_payment.get('id'), 'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'), 'username': username, 'stars': stars},
             id=f'payment_{event_from_user.id}',
-            seconds=5
+            seconds=10
         )
         job = scheduler.get_job(f'stop_payment_{event_from_user.id}')
         if not job:
             scheduler.add_job(
                 stop_check_payment,
                 'interval',
-                args=[event_from_user.id, scheduler],
+                args=[event_from_user.id, application.uid_key, session, scheduler],
                 id=f'stop_payment_{event_from_user.id}',
                 minutes=30
             )
     return {
         'crypto_link': crypto_url,
         'oxa_link': oxa_url,
-        'card_link': card_url
+        'sbp_link': sbp_url,
+        'card_link': card_url,
+        'uid_key': application.uid_key,
+        'rub': float(amount),
+        'usdt': usdt,
+        'amount': stars,
+        'username': username
     }
 
 
 async def close_payment(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
     scheduler: AsyncIOScheduler = dialog_manager.middleware_data.get('scheduler')
+    session: DataInteraction = dialog_manager.middleware_data.get('session')
+    application = await session.get_application(dialog_manager.dialog_data.get('uid_key'))
+    if application.status != 2:
+        await session.update_application(dialog_manager.dialog_data.get('uid_key'), 0, None)
     job = scheduler.get_job(f'payment_{clb.from_user.id}')
     if job:
         job.remove()
@@ -125,7 +142,7 @@ async def get_stars_amount(msg: Message, widget: ManagedTextInput, dialog_manage
         await msg.delete()
         await msg.answer('❗️Кол-во звезд должно быть числом, пожалуйста попробуйте снова')
         return
-    if not (50 <= amount <= 1000000):
+    if not (50 <= amount <= 100000):
         await msg.answer('❗️Кол-во звезд должно быть больше 50 и меньше 1000000')
         return
     dialog_manager.dialog_data['amount'] = amount
