@@ -49,6 +49,7 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
             text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
         )
         await session.update_application(app_id, 2, payment)
+        await session.add_payment()
         job = scheduler.get_job(f'payment_{user_id}')
         if job:
             job.remove()
