@@ -98,7 +98,7 @@ async def run_uvicorn():
     app = FastAPI()
     app.include_router(router)
 
-    config = uvicorn.Config(app, host='0.0.0.0', port=443, log_level="info", ssl_keyfile='ssl/myserver.key', ssl_certfile='ssl/myserver.csr')
+    config = uvicorn.Config(app, host='0.0.0.0', port=443, log_level="info", ssl_keyfile='ssl/key.pem', ssl_certfile='ssl/cert.pem')
     server = uvicorn.Server(config)
     await server.serve()
 
