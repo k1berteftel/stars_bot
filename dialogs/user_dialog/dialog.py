@@ -57,7 +57,7 @@ user_dialog = Dialog(
             Url(Const('💲Crypto Bot'), id='crypto_url', url=Format('{crypto_link}')),
             Url(Const('💵Крипта / USDT'), id='oxa_url', url=Format('{oxa_link}')),
             Url(Const('💶СБП'), id='sbp_url', url=Format('{sbp_link}')),
-            #Url(Const('💳Карта'), id='card_url', url=Format('{card_link}'))
+            Url(Const('💳Карта'), id='card_url', url=Format('{card_link}'))
         ),
         Button(Const('❌Закрыть меню'), id='close_payment', on_click=getters.close_payment),
         getter=getters.payment_menu_getter,
