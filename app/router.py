@@ -19,10 +19,10 @@ sessions = database.session()
 
 
 @router.post("/payment")
-async def ping(response: Response, status_code=200):
+async def ping(response: Response):
     print(response.__dict__)
     print(response.body.decode())
-    data = json.loads(response.body)
+    data = json.loads(response.body.decode())
     session = DataInteraction(sessions)
     print(data)
     user_id = int(data['orderId'])
