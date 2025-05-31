@@ -24,6 +24,7 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
         username = kwargs.get('username')
         stars = kwargs.get('stars')
         status = await transfer_stars(username, stars)
+        application = await session.get_application(app_id)
         payment = ''
         if crypto_bot:
             payment = 'crypto_bot'
@@ -36,7 +37,8 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
                 chat_id=user_id,
                 text='🚨Во время начисления звезд что-то пошло не так, пожалуйста обратитесь в поддержку'
             )
-            await session.update_application(app_id, 3, payment)
+            if application.status != 2:
+                await session.update_application(app_id, 3, payment)
             job = scheduler.get_job(f'payment_{user_id}')
             if job:
                 job.remove()
@@ -48,7 +50,8 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
             chat_id=user_id,
             text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
         )
-        await session.update_application(app_id, 2, payment)
+        if application.status != 2:
+            await session.update_application(app_id, 2, payment)
         await session.add_payment()
         job = scheduler.get_job(f'payment_{user_id}')
         if job:
@@ -61,7 +64,9 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
 
 
 async def stop_check_payment(user_id: int, app_id: int, session: DataInteraction, scheduler: AsyncIOScheduler):
-    await session.update_application(app_id, 0, None)
+    application = await session.get_application(app_id)
+    if application.status != 2:
+        await session.update_application(app_id, 0, None)
     job = scheduler.get_job(f'payment_{user_id}')
     if job:
         job.remove()
