@@ -3,6 +3,7 @@ import json
 
 from aiogram import Bot
 from fastapi import APIRouter, Request
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.build import PostgresBuild
 from database.action_data_class import DataInteraction
@@ -16,6 +17,9 @@ router = APIRouter()
 
 database = PostgresBuild(config.db.dns)
 sessions = database.session()
+
+scheduler: AsyncIOScheduler = AsyncIOScheduler()
+scheduler.start()
 
 
 @router.post("/payment")
@@ -31,7 +35,7 @@ async def ping(response: Request):
     if application.status in [0, 2, 3]:
         return "OK"
     if data['transactionStatus'] == 'Paid':
-        status = await transfer_stars(application.username, application.amount)
+        status = await transfer_stars(application.receiver, application.amount)
         bot = Bot(token=config.bot.token)
         if not status:
             await bot.send_message(
@@ -39,10 +43,22 @@ async def ping(response: Request):
                 text='🚨Во время начисления звезд что-то пошло не так, пожалуйста обратитесь в поддержку'
             )
             await session.update_application(application.uid_key, 3, 'card')
+            job = scheduler.get_job(f'payment_{user_id}')
+            if job:
+                job.remove()
+            stop_job = scheduler.get_job(f'stop_payment_{user_id}')
+            if stop_job:
+                stop_job.remove()
             return "OK"
         await bot.send_message(
             chat_id=user_id,
             text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
         )
+        job = scheduler.get_job(f'payment_{user_id}')
+        if job:
+            job.remove()
+        stop_job = scheduler.get_job(f'stop_payment_{user_id}')
+        if stop_job:
+            stop_job.remove()
         await session.update_application(application.uid_key, status=2, payment='card')
     return "OK"

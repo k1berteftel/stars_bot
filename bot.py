@@ -14,7 +14,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from app.router import router
+from app.router import router, scheduler
 from storage.nats_storage import NatsStorage
 from utils.nats_connect import connect_to_nats
 from database.build import PostgresBuild
@@ -55,9 +55,6 @@ async def run_aiogram():
     #await database.create_tables(Base)
     session = database.session()
     #await setup_database(session)
-
-    scheduler: AsyncIOScheduler = AsyncIOScheduler()
-    scheduler.start()
 
     scheduler.add_job(
         clean_applications,
