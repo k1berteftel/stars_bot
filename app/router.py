@@ -28,8 +28,7 @@ async def ping(response: Request):
     user_id = int(data['orderId'])
     application = await session.get_last_application(user_id)
     print(application.__dict__)
-    if application.create.timestamp() < (datetime.datetime.today() - datetime.timedelta(minutes=30)).timestamp():
-        print('here stop')
+    if application.status in [0, 2, 3]:
         return "OK"
     if data['transactionStatus'] == 'Paid':
         status = await transfer_stars(application.username, application.amount)
