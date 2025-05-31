@@ -22,8 +22,7 @@ sessions = database.session()
 async def ping(response: Request):
     print(response.__dict__)
     print(await response.json())
-    return
-    data = json.loads(response.body.decode())
+    data = await response.json()
     session = DataInteraction(sessions)
     print(data)
     user_id = int(data['orderId'])
