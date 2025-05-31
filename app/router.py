@@ -2,7 +2,7 @@ import datetime
 import json
 
 from aiogram import Bot
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Request
 
 from database.build import PostgresBuild
 from database.action_data_class import DataInteraction
@@ -19,9 +19,10 @@ sessions = database.session()
 
 
 @router.post("/payment")
-async def ping(response: Response):
+async def ping(response: Request):
     print(response.__dict__)
-    print(response.body.decode())
+    print(await response.json())
+    return
     data = json.loads(response.body.decode())
     session = DataInteraction(sessions)
     print(data)
