@@ -31,19 +31,25 @@ async def ping(response: Request):
     print(application.__dict__)
     if application.status in [0, 2, 3]:
         return "OK"
+    trans_type = data['transactionType']
     if data['transactionStatus'] == 'Paid':
         status = await transfer_stars(application.receiver, application.amount)
+        payment = ''
+        if trans_type == 'CardCrypto':
+            payment = 'card'
+        if trans_type == 'SBP':
+            payment = 'sbp'
         bot = Bot(token=config.bot.token)
         if not status:
             await bot.send_message(
                 chat_id=user_id,
                 text='🚨Во время начисления звезд что-то пошло не так, пожалуйста обратитесь в поддержку'
             )
-            await session.update_application(application.uid_key, 3, 'card')
+            await session.update_application(application.uid_key, 3, payment)
             return "OK"
         await bot.send_message(
             chat_id=user_id,
             text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
         )
-        await session.update_application(application.uid_key, status=2, payment='card')
+        await session.update_application(application.uid_key, status=2, payment=payment)
     return "OK"

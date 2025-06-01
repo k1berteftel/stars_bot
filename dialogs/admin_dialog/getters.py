@@ -94,7 +94,7 @@ async def application_menu_getter(dialog_manager: DialogManager, **kwargs):
     }
     payments = {
         None: 'Не оплачен',
-        'sbp': 'СБП (lava)',
+        'sbp': 'СБП (Wata)',
         'card': 'Карта (Wata)',
         'crypto': 'Крипта (Oxa pay)',
         'crypto_bot': 'Криптобот'

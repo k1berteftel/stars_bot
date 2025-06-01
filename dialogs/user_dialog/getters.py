@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.input import ManagedTextInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from utils.schedulers import check_payment, stop_check_payment
-from utils.payment import get_crypto_payment_data, get_card_payment_data, get_oxa_payment_data, _get_usdt_rub, get_wata_payment_data
+from utils.payment import get_crypto_payment_data, get_oxa_payment_data, _get_usdt_rub, get_wata_card_data, get_wata_sbp_data
 from database.action_data_class import DataInteraction
 from config_data.config import load_config, Config
 from states.state_groups import startSG
@@ -65,10 +65,10 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         prices = await session.get_prices()
         amount = int(round((stars * 1.21) / (1 - prices.charge / 100)))
         usdt = round(amount / (await _get_usdt_rub()), 2)
-        sbp_payment = await get_card_payment_data(amount)
+        sbp_payment = await get_wata_sbp_data(event_from_user.id, amount)
         crypto_payment = await get_crypto_payment_data(usdt)
         oxa_payment = await get_oxa_payment_data(usdt)
-        card_payment = await get_wata_payment_data(event_from_user.id, amount)
+        card_payment = await get_wata_card_data(event_from_user.id, amount)
         dialog_manager.dialog_data['sbp_url'] = sbp_payment.get('url')
         dialog_manager.dialog_data['crypto_url'] = crypto_payment.get('url')
         dialog_manager.dialog_data['oxa_url'] = oxa_payment.get('url')
@@ -94,7 +94,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
             check_payment,
             'interval',
             args=[bot, event_from_user.id, application.uid_key, session, scheduler],
-            kwargs={'sbp_id': sbp_payment.get('id'), 'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'), 'username': username, 'stars': stars},
+            kwargs={'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'), 'username': username, 'stars': stars},
             id=f'payment_{event_from_user.id}',
             seconds=10
         )

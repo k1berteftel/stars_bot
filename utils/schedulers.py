@@ -7,20 +7,17 @@ from aiogram_dialog import DialogManager
 from aiogram.types import InlineKeyboardMarkup, Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-
 from .transactions import transfer_stars
-from .payment import check_crypto_payment, check_card_payment, check_oxa_payment, check_wata_payment
+from .payment import check_crypto_payment, check_oxa_payment
 from database.action_data_class import DataInteraction
 
 
 async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataInteraction, scheduler: AsyncIOScheduler, **kwargs):
     invoice_id = kwargs.get('invoice_id')
-    sbp_id = kwargs.get('sbp_id')
     track_id = kwargs.get('track_id')
     crypto_bot = await check_crypto_payment(invoice_id)
-    sbp = await check_card_payment(sbp_id)
     crypto = await check_oxa_payment(track_id)
-    if crypto_bot or sbp or crypto:
+    if crypto_bot or crypto:
         username = kwargs.get('username')
         stars = kwargs.get('stars')
         status = await transfer_stars(username, stars)
@@ -28,8 +25,6 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
         payment = ''
         if crypto_bot:
             payment = 'crypto_bot'
-        if sbp:
-            payment = 'sbp'
         if crypto:
             payment = 'crypto'
         if not status:

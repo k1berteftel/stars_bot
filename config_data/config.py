@@ -45,7 +45,8 @@ class Oxa:
 
 @dataclass
 class Wata:
-    api_key: str
+    card_key: str
+    sbp_key: str
 
 
 @dataclass
@@ -88,6 +89,7 @@ def load_config(path: str | None = None) -> Config:
             secret_key=env('secret_key')
         ),
         wata=Wata(
-            api_key=env('wata_api_key')
+            card_key=env('wata_card_key'),
+            sbp_key=env('wata_sbp_key')
         )
     )

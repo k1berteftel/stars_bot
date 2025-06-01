@@ -27,9 +27,32 @@ def _add_signature(data: dict) -> str:
     return sign
 
 
-async def get_wata_payment_data(user_id: int, price: int) -> dict | bool:
+async def get_wata_card_data(user_id: int, price: int) -> dict | bool:
     headers = {
-        'Authorization': f'Bearer {config.wata.api_key}',
+        'Authorization': f'Bearer {config.wata.card_key}',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        "amount": float(price),
+        "currency": "RUB",
+        "orderId": str(user_id)
+    }
+    async with ClientSession() as session:
+        async with session.post('https://api.wata.pro/api/h2h/links', json=data, headers=headers) as resp:
+            if resp.status != 200:
+                print(await resp.json())
+                print(resp.status)
+                return False
+            data = await resp.json()
+    return {
+        'id': data['id'],
+        'url': data['url']
+    }
+
+
+async def get_wata_sbp_data(user_id: int, price: int) -> dict | bool:
+    headers = {
+        'Authorization': f'Bearer {config.wata.sbp_key}',
         'Content-Type': 'application/json'
     }
     data = {
@@ -160,7 +183,7 @@ async def check_wata_payment(id: str):
     url = f'https://api.wata.pro/api/h2h/links/{id}'
     print(url)
     headers = {
-        'Authorization': f'Bearer {config.wata.api_key}',
+        'Authorization': f'Bearer {config.wata.card_key}',
         'Content-Type': 'application/json'
     }
     async with ClientSession() as session:
