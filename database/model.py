@@ -90,7 +90,7 @@ class ApplicationsTable(Base):
     amount: Mapped[int] = mapped_column(Integer)
     rub: Mapped[int] = mapped_column(Integer)
     usdt: Mapped[float] = mapped_column(Float)
-    create: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    create: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
     status: Mapped[Literal[0, 1, 2]] = mapped_column(Integer, default=1)
     """
     0 - Не оплачен

@@ -173,9 +173,9 @@ async def get_username(msg: Message, widget: ManagedTextInput, dialog_manager: D
 async def get_ref_amount_switcher(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     user = await session.get_user(clb.from_user.id)
-    if user.earn < 100:
-        await clb.answer('❗️Сумма для покупки звезд через партнерские начисления должна быть 100 или более руб.')
-        return
+    #if user.earn < 100:
+        #await clb.answer('❗️Сумма для покупки звезд через партнерские начисления должна быть 100 или более руб.')
+        #return
     await dialog_manager.switch_to(startSG.get_stars_amount)
 
 
@@ -195,7 +195,7 @@ async def get_derive_amount_switcher(clb: CallbackQuery, widget: Button, dialog_
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     user = await session.get_user(clb.from_user.id)
     if user.earn < 100:
-        await clb.answer('❗️Сумма для вывода 100 или более руб.')
+        await clb.answer('❗️Сумма для вывода 100 звезд или более .')
         return
     await dialog_manager.switch_to(startSG.get_derive_amount)
 
