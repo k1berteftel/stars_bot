@@ -1,9 +1,11 @@
 import asyncio
 import logging
 import os
+import sys
 import inspect
 import pytz
 import datetime
+import traceback
 
 import uvicorn
 
@@ -37,12 +39,36 @@ module_dir = os.path.realpath(os.path.dirname(module_path))
 format = '[{asctime}] #{levelname:8} {filename}:' \
          '{lineno} - {name} - {message}'
 
+LOG_FILE = 'errors.log'
+
 logging.basicConfig(
     level=logging.DEBUG,
     format=format,
-    style='{'
+    style='{',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler(sys.stdout)
+    ]
 )
 
+
+def log_exception(exc_type, exc_value, exc_traceback):
+    """
+    Функция для записи исключения в лог
+    """
+    # Исключаем стандартные KeyboardInterrupt и SystemExit
+    if issubclass(exc_type, KeyboardInterrupt):
+        return
+
+    # Получаем traceback как строку
+    exc_info = exc_type, exc_value, exc_traceback
+    exc_str = ''.join(traceback.format_exception(*exc_info))
+
+    # Логируем в файл
+    logging.error(f"Необработанное исключение:\n{exc_str}")
+
+
+sys.excepthook = log_exception
 
 logger = logging.getLogger(__name__)
 

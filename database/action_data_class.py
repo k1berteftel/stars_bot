@@ -69,6 +69,7 @@ class DataInteraction():
         async with self._sessions() as session:
             await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
                 refs=UsersTable.refs + 1,
+                earn=UsersTable.earn + 2
             ))
             await session.commit()
 
@@ -208,6 +209,26 @@ class DataInteraction():
             await session.execute(update(ApplicationsTable).where(ApplicationsTable.uid_key == uid_key).values(
                 status=status,
                 payment=payment
+            ))
+            await session.commit()
+
+    async def update_buys(self, user_id: int, stars: int):
+        user = await self.get_user(user_id)
+        async with self._sessions() as session:
+            if user.buys is None:
+                await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
+                    buys=stars
+                ))
+            else:
+                await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
+                    buys=UsersTable.buys + stars
+                ))
+            await session.commit()
+
+    async def update_earn(self, user_id: int, earn: int):
+        async with self._sessions() as session:
+            await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
+                earn=UsersTable.earn + earn
             ))
             await session.commit()
 

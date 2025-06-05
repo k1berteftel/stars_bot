@@ -184,7 +184,7 @@ async def ref_menu_getter(event_from_user: User, dialog_manager: DialogManager, 
     user = await session.get_user(event_from_user.id)
     text = (f'<b>👥 Партнерская программа</b>\n\nПриглашайте людей и получайте 15% от нашего дохода НАВСЕГДА\n\n'
             f'<b>Ваша партнерская ссылка:\n</b>t.me/TrustStarsBot?start={event_from_user.id}\n\n<b>Статистика вашей партнерки:</b>'
-            f'\n\t- Рефералов: {user.refs}\n\t- Баланс: {user.earn} руб\n\n<b>Минимальная сумма выплаты - 100 руб</b>')
+            f'\n\t- Рефералов: {user.refs}\n\t- Баланс: {user.earn} ⭐️\n\n<b>Минимальная сумма выплаты - 100 ⭐️</b>')
     return {
         'text': text,
         'url': f'http://t.me/share/url?url=https://t.me/TrustStarsBot?start={event_from_user.id}'

@@ -9,6 +9,7 @@ from aiogram_dialog.widgets.kbd import Button, Select
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from utils.tables import get_table
 from utils.build_ids import get_random_id
 from utils.schedulers import send_messages
 from database.action_data_class import DataInteraction
@@ -61,6 +62,32 @@ async def get_users_txt(clb: CallbackQuery, widget: Button, dialog_manager: Dial
     )
     try:
         os.remove('users.txt')
+    except Exception:
+        ...
+
+
+async def get_ref_table(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
+    session: DataInteraction = dialog_manager.middleware_data.get('session')
+    users = await session.get_users()
+    table_users = []
+    for user in users:
+        if not user.earn and not user.buys:
+            return
+        table_users.append(
+            [
+                user.user_id,
+                user.name,
+                '@' + user.username if user.username else '-',
+                user.refs,
+                user.earn,
+                user.buys
+            ]
+        )
+    table_users.insert(0, ['User Id', 'Никнейм', 'Юзернейм', 'Рефералы', 'Заработок (Баланс)', 'Купил звезд'])
+    table = get_table(table_users, 'refs_data')
+    await clb.message.answer_document(FSInputFile(path=table))
+    try:
+        os.remove(table)
     except Exception:
         ...
 

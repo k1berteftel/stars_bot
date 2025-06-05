@@ -20,7 +20,9 @@ admin_dialog = Dialog(
             SwitchTo(Const('Управление промокодами'), id='promos_menu_switcher', state=adminSG.promos_menu),
             SwitchTo(Const('👥 Управление админами'), id='admin_menu_switcher', state=adminSG.admin_menu),
             SwitchTo(Const('Управление наценкой'), id='charge_menu_switcher', state=adminSG.charge_menu),
+            #SwitchTo(Const('Управление ОП'), id='op_menu_switcher', state=adminSG.op_menu),
             Button(Const('📋Выгрузка базы пользователей'), id='get_users_txt', on_click=getters.get_users_txt),
+            Button(Const('Выгрузка реф. участников'), id='get_ref_table', on_click=getters.get_ref_table),
         ),
         Cancel(Const('Назад'), id='close_admin'),
         state=adminSG.start

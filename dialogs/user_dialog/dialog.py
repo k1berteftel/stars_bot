@@ -18,6 +18,7 @@ user_dialog = Dialog(
             SwitchTo(Const('🎁Подарок другу'), id='get_username_switcher', state=startSG.get_username),
             SwitchTo(Const('👤Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu),
             SwitchTo(Const('📋Правила'), id='rules_menu_switcher', state=startSG.rules_menu),
+            Url(Const('🌠Наш канал'), id='channel_url', url=Const('https://t.me/TrustStarsNews')),
             Url(Const('📩Поддержка'), id='support_url', url=Const('https://t.me/TrustStarsHelp')),
             Start(Const('Админ панель'), id='admin', state=adminSG.start, when='admin')
         ),

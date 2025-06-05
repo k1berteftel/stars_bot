@@ -24,6 +24,7 @@ class UsersTable(Base):
     active: Mapped[int] = mapped_column(Integer, default=1)
     activity: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
     entry: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
+    buys: Mapped[int] = mapped_column(Integer, default=0, nullable=True)
 
 
 class DeeplinksTable(Base):

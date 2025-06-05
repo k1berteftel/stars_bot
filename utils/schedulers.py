@@ -48,6 +48,10 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
         if application.status != 2:
             await session.update_application(app_id, 2, payment)
         await session.add_payment()
+        await session.update_buys(user_id, stars)
+        user = await session.get_user(user_id)
+        if user.referral:
+            await session.update_earn(user.referral, int(round(stars * 0.15)))
         job = scheduler.get_job(f'payment_{user_id}')
         if job:
             job.remove()
