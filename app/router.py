@@ -54,7 +54,4 @@ async def ping(response: Request):
         await session.update_application(application.uid_key, status=2, payment=payment)
         await session.add_payment()
         await session.update_buys(user_id, application.amount)
-        user = await session.get_user(user_id)
-        if user.referral:
-            await session.update_earn(user.referral, int(round(application.amount * 0.15)))
     return "OK"

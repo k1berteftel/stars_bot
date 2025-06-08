@@ -45,7 +45,7 @@ class DataInteraction():
             result = await session.scalar(select(UsersTable).where(UsersTable.user_id == user_id))
         return True if result else False
 
-    async def add_user(self, user_id: int, username: str, name: str, referral: int | None):
+    async def add_user(self, user_id: int, username: str, name: str, referral: int | None, sub_referral: int | None):
         if await self.check_user(user_id):
             return
         async with self._sessions() as session:
@@ -54,6 +54,7 @@ class DataInteraction():
                 username=username,
                 name=name,
                 referral=referral,
+                sub_referral=sub_referral,
                 entry=datetime.datetime.now()
             ))
             await session.commit()
@@ -69,8 +70,23 @@ class DataInteraction():
         async with self._sessions() as session:
             await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
                 refs=UsersTable.refs + 1,
-                earn=UsersTable.earn + 2
+                earn=UsersTable.earn + 3
             ))
+            await session.commit()
+
+    async def add_sub_refs(self, user_id: int):
+        user = await self.get_user(user_id)
+        async with self._sessions() as session:
+            if user.sub_refs:
+                await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
+                    sub_refs=UsersTable.sub_refs + 1,
+                    earn=UsersTable.earn + 2
+                ))
+            else:
+                await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
+                    sub_refs=1,
+                    earn=UsersTable.earn + 2
+                ))
             await session.commit()
 
     async def add_entry(self, link: str):

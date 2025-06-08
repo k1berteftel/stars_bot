@@ -14,6 +14,7 @@ user_router = Router()
 async def start_dialog(msg: Message, dialog_manager: DialogManager, session: DataInteraction, command: CommandObject):
     args = command.args
     referral = None
+    sub_referral = None
     if args:
         link_ids = await session.get_links()
         ids = [i.link for i in link_ids]
@@ -31,10 +32,14 @@ async def start_dialog(msg: Message, dialog_manager: DialogManager, session: Dat
                 if args in users:
                     referral = args
                     await session.add_refs(args)
+                    user = await session.get_user(referral)
+                    if user.referral:
+                        sub_referral = user.referral
+                        await session.add_sub_refs(sub_referral)
             except Exception as err:
                 print(err)
     await session.add_user(msg.from_user.id, msg.from_user.username if msg.from_user.username else 'Отсутствует',
-                           msg.from_user.full_name, referral=referral)
+                           msg.from_user.full_name, referral=referral, sub_referral=sub_referral)
     if dialog_manager.has_context():
         await dialog_manager.done()
         try:
