@@ -72,7 +72,7 @@ async def get_ref_table(clb: CallbackQuery, widget: Button, dialog_manager: Dial
     table_users = []
     for user in users:
         if not user.earn and not user.buys:
-            return
+            continue
         table_users.append(
             [
                 user.user_id,
