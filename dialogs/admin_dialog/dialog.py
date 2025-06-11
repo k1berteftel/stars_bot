@@ -23,6 +23,7 @@ admin_dialog = Dialog(
             #SwitchTo(Const('Управление ОП'), id='op_menu_switcher', state=adminSG.op_menu),
             Button(Const('📋Выгрузка базы пользователей'), id='get_users_txt', on_click=getters.get_users_txt),
             Button(Const('Выгрузка реф. участников'), id='get_ref_table', on_click=getters.get_ref_table),
+            Button(Const('Проверить активность'), id='check_activity', on_click=getters.check_activity),
         ),
         Cancel(Const('Назад'), id='close_admin'),
         state=adminSG.start

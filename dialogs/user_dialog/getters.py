@@ -61,10 +61,24 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     sbp_url = dialog_manager.dialog_data.get('sbp_url')
     oxa_url = dialog_manager.dialog_data.get('oxa_url')
     card_url = dialog_manager.dialog_data.get('card_url')
-    if not job:
-        prices = await session.get_prices()
-        amount = int(round((stars * 1.21) / (1 - prices.charge / 100)))
-        usdt = round(amount / (await _get_usdt_rub()), 2)
+    prices = await session.get_prices()
+    amount = int(round((stars * 1.21) / (1 - prices.charge / 100)))
+    usdt = round(amount / (await _get_usdt_rub()), 2)
+    username = dialog_manager.dialog_data.get('username')
+    if not username:
+        username = event_from_user.username
+    if not event_from_user.username:
+        await bot.send_message(
+            chat_id=event_from_user.id,
+            text='❗️Чтобы покупать звезды, пожалуйста поставьте на свой аккаунт юзернейм себе юзернейм'
+        )
+        dialog_manager.dialog_data.clear()
+        await dialog_manager.switch_to(startSG.start)
+        return
+    app_id = dialog_manager.dialog_data.get('app_id')
+    if app_id:
+        application = await session.get_application(app_id)
+    if not job or not app_id:
         sbp_payment = await get_wata_sbp_data(event_from_user.id, amount)
         crypto_payment = await get_crypto_payment_data(usdt)
         oxa_payment = await get_oxa_payment_data(usdt)
@@ -77,19 +91,12 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         sbp_url = sbp_payment.get('url')
         oxa_url = oxa_payment.get('url')
         card_url = card_payment.get('url')
-        username = dialog_manager.dialog_data.get('username')
-        if not username:
-            username = event_from_user.username
-        if not event_from_user.username:
-            await bot.send_message(
-                chat_id=event_from_user.id,
-                text='❗️Чтобы покупать звезды, пожалуйста поставьте на свой аккаунт юзернейм себе юзернейм'
-            )
-            dialog_manager.dialog_data.clear()
-            await dialog_manager.switch_to(startSG.start)
-            return
         application = await session.add_application(event_from_user.id, username, stars, amount, usdt)
+        dialog_manager.dialog_data['app_id'] = app_id
         dialog_manager.dialog_data['uid_key'] = application.uid_key
+        job = scheduler.get_job(job_id=f'payment_{event_from_user.id}')
+        if job:
+            job.remove()
         scheduler.add_job(
             check_payment,
             'interval',

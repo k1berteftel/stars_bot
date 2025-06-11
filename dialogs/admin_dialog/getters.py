@@ -2,6 +2,7 @@ import os
 import datetime
 
 from aiogram import Bot
+from aiogram.enums.chat_action import ChatAction
 from aiogram.types import CallbackQuery, User, Message, FSInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.api.entities import MediaAttachment
@@ -308,10 +309,27 @@ async def get_time(msg: Message, widget: ManagedTextInput, dialog_manager: Dialo
     await dialog_manager.switch_to(adminSG.get_keyboard)
 
 
+async def check_activity(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
+    session: DataInteraction = dialog_manager.middleware_data.get('session')
+    users = await session.get_users()
+    for user in users:
+        try:
+            await clb.bot.send_chat_action(
+                chat_id=user.user_id,
+                action=ChatAction.TYPING
+            )
+            if not user.active:
+                await session.set_active(user.user_id, 1)
+        except Exception as err:
+            if user.active:
+                await session.set_active(user.user_id, 0)
+    await clb.message.answer('Проверка активности завершена, проверьте пожалуйста статистику')
+
+
 async def get_mail_keyboard(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
     try:
         buttons = text.split('\n')
-        keyboard: list[tuple] = [(i.split('-')[0], i.split('-')[1]) for i in buttons]
+        keyboard: list[tuple] = [(i.split('-')[0].strip(), i.split('-')[1].strip()) for i in buttons]
     except Exception as err:
         print(err)
         await msg.answer('Вы ввели данные не в том формате, пожалуйста попробуйте снова')

@@ -1,6 +1,7 @@
 import asyncio
 import aiohttp
 import json
+import logging
 
 from ton_fragment.helpers import scraper
 
@@ -25,9 +26,11 @@ async def transfer_stars(username: str, stars: int) -> bool:
             print(resp.status)
             if resp.status not in [200, 201]:
                 print(await resp.json())
+                logging.error(await resp.json())
                 return False
             data = await resp.json()
             if data['ok'] != True:
+                logging.error(data)
                 return False
             print(data)
     return True
