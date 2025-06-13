@@ -94,13 +94,4 @@ user_dialog = Dialog(
         SwitchTo(Const('🔙Назад'), id='back_ref_menu', state=startSG.ref_menu),
         state=startSG.get_derive_amount
     ),
-    Window(
-        Const('<b>Укажите свой номер карты для вывода средств</b>'),
-        TextInput(
-            id='get_card',
-            on_success=getters.get_card
-        ),
-        SwitchTo(Const('🔙Назад'), id='back_ref_menu', state=startSG.ref_menu),
-        state=startSG.get_card
-    ),
 )

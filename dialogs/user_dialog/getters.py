@@ -6,6 +6,7 @@ from aiogram_dialog.widgets.kbd import Button, Select
 from aiogram_dialog.widgets.input import ManagedTextInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from utils.transactions import transfer_stars
 from utils.schedulers import check_payment, stop_check_payment
 from utils.payment import get_crypto_payment_data, get_oxa_payment_data, _get_usdt_rub, get_wata_card_data, get_wata_sbp_data
 from database.action_data_class import DataInteraction
@@ -67,10 +68,10 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     username = dialog_manager.dialog_data.get('username')
     if not username:
         username = event_from_user.username
-    if not event_from_user.username:
+    if not event_from_user.username and username:
         await bot.send_message(
             chat_id=event_from_user.id,
-            text='❗️Чтобы покупать звезды, пожалуйста поставьте на свой аккаунт юзернейм себе юзернейм'
+            text='❗️Чтобы покупать звезды, пожалуйста поставьте на свой аккаунт юзернейм'
         )
         dialog_manager.dialog_data.clear()
         await dialog_manager.switch_to(startSG.start)
@@ -223,10 +224,15 @@ async def get_derive_amount(msg: Message, widget: ManagedTextInput, dialog_manag
     if amount > user.earn:
         await msg.answer('❗️Сумма для вывода должна быть не больше той что сейчас у вас')
         return
-    dialog_manager.dialog_data['derive_amount'] = amount
-    await dialog_manager.switch_to(startSG.get_card)
-
-
-async def get_card(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
-    pass
+    username = msg.from_user.username
+    if not username:
+        await msg.answer(text='❗️Чтобы получить звезды, пожалуйста поставьте на свой аккаунт юзернейм')
+        return
+    status = await transfer_stars(username, amount)
+    if not status:
+        await msg.answer(text='🚨Во время начисления звезд что-то пошло не так, пожалуйста обратитесь в поддержку')
+    await session.update_earn(msg.from_user.id, -amount)
+    await msg.answer('✅Звезды были успешно переведены')
+    dialog_manager.dialog_data.clear()
+    await dialog_manager.switch_to(startSG.ref_menu)
 
