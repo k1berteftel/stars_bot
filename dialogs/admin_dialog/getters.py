@@ -80,12 +80,12 @@ async def get_ref_table(clb: CallbackQuery, widget: Button, dialog_manager: Dial
                 user.name,
                 '@' + user.username if user.username else '-',
                 user.refs,
-                user.sub_refs,
+                user.sub_refs if user.sub_refs else '-',
                 user.earn,
                 user.buys
             ]
         )
-    table_users.insert(0, ['User Id', 'Никнейм', 'Юзернейм', 'Рефералы' 'Рефералы второй ступени', 'Заработок (Баланс)', 'Купил звезд'])
+    table_users.insert(0, ['User Id', 'Никнейм', 'Юзернейм', 'Рефералы' 'Рефералы 2', 'Заработок (Баланс)', 'Купил звезд'])
     table = get_table(table_users, 'refs_data')
     await clb.message.answer_document(FSInputFile(path=table))
     try:
