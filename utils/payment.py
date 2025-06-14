@@ -16,15 +16,8 @@ from config_data.config import Config, load_config
 
 config: Config = load_config()
 
-secret_key = config.lava.secret_key
 merchant_api_key = config.oxa.api_key
 crypto_bot = AioCryptoPay(token=config.crypto_bot.token, network=Networks.MAIN_NET)
-
-
-def _add_signature(data: dict) -> str:
-    data = dict(sorted(data.items(), key=lambda x: x[0]))
-    sign = hmac.new(bytes(secret_key, 'utf-8'), json.dumps(data).encode('utf-8'), hashlib.sha256).hexdigest()
-    return sign
 
 
 async def get_wata_card_data(user_id: int, price: int) -> dict | bool:
@@ -73,33 +66,6 @@ async def get_wata_sbp_data(user_id: int, price: int) -> dict | bool:
     }
 
 
-async def get_card_payment_data(price: int) -> dict | bool:
-    headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-    }
-    data = {
-        'sum': float(price),
-        'orderId': get_random_id(),
-        'shopId': '9262f0d1-9aa6-4a7b-b4fb-38fe93779454',
-        'includeService': ['sbp']
-    }
-    data = dict(sorted(data.items(), key=lambda x: x[0]))
-    sign = _add_signature(data)
-    headers['Signature'] = sign
-    async with ClientSession() as session:
-        async with session.post('https://api.lava.ru/business/invoice/create', json=data, headers=headers) as resp:
-            if resp.status != 200:
-                print(await resp.json())
-                print(resp.status)
-                return False
-            data = await resp.json()
-    return {
-        'id': data['data']['id'],
-        'url': data['data']['url']
-    }
-
-
 async def get_oxa_payment_data(amount: int | float):
     url = 'https://api.oxapay.com/v1/payment/invoice'
     headers = {
@@ -130,29 +96,58 @@ async def get_crypto_payment_data(amount: int | float):
     }
 
 
-async def check_card_payment(id: str) -> bool:
-    headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-    }
+async def get_p2p_sbp(amount: int):
+    url = 'https://p2pkassa.live/api/v1/acquiring'
+    order_id = get_random_id()
     data = {
-        'shopId': '9262f0d1-9aa6-4a7b-b4fb-38fe93779454',
-        'orderId': get_random_id(),
-        'invoiceId': id
+        'project_id': 386,
+        'order_id': order_id,
+        'amount': float(amount),
+        'currency': 'RUB',
+        'method': 'sbp',
     }
-    data = dict(sorted(data.items(), key=lambda x: x[0]))
-    sign = _add_signature(data)
-    headers['Signature'] = sign
+    join_string = f"{config.p2p.api_key}{order_id}{386}{float(amount):.2f}RUB"
+    auth_token = hashlib.sha512(join_string.encode('utf-8')).hexdigest()
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {auth_token}'
+    }
     async with ClientSession() as session:
-        async with session.post('https://api.lava.ru/business/invoice/status', json=data, headers=headers) as resp:
+        async with session.post(url, json=data, headers=headers) as resp:
             if resp.status != 200:
-                print('card check error', await resp.json())
+                print(await resp.json())
                 print(resp.status)
                 return False
+            data = await resp.content.read()
+            data = json.loads(data.decode('utf-8'))
+    return {
+        'url': data['link'],
+        'id': data['id'],
+        'order_id': order_id
+    }
+
+
+async def check_p2p_sbp(order_id: str, id: str):
+    async with ClientSession() as session:
+        url = 'https://p2pkassa.live/api/v1/getpayAcquiring'
+        join_string = f"{config.p2p.api_key}{id}{order_id}{386}"
+        data = {
+            'id': id,
+            'order_id': order_id,
+            'project_id': 386
+        }
+        auth_token = hashlib.sha512(join_string.encode('utf-8')).hexdigest()
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {auth_token}'
+        }
+        async with session.post(url, json=data, headers=headers) as resp:
+            if resp.status != 200:
+                return False
             data = await resp.json()
-    if data['data']['status'] == 'success':
-        return True
-    return False
+            if data['status'] == 'PAID':
+                return True
+            return False
 
 
 async def check_oxa_payment(track_id: str) -> bool:
@@ -179,25 +174,6 @@ async def check_crypto_payment(invoice_id: int) -> bool:
     return False
 
 
-async def check_wata_payment(id: str):
-    url = f'https://api.wata.pro/api/h2h/links/{id}'
-    print(url)
-    headers = {
-        'Authorization': f'Bearer {config.wata.card_key}',
-        'Content-Type': 'application/json'
-    }
-    async with ClientSession() as session:
-        async with session.get(url, headers=headers) as resp:
-            if resp.status != 200:
-                print(resp.status)
-                print('wata check error', await resp.json())
-                return False
-            data = await resp.json()
-    if data['status'] == 'Closed':
-        return True
-    return False
-
-
 async def _get_usdt_rub() -> float:
     async with ClientSession() as session:
         async with session.get('https://www.rbc.ru/crypto/currency/usdtrub') as res:
@@ -208,4 +184,4 @@ async def _get_usdt_rub() -> float:
             return float(price[value.start():value.end():].replace(',', '.'))
 
 
-#print(asyncio.run(check_wata_payment('3a19f00f-819b-71cc-799f-c57af7076efb')))
+#print(asyncio.run(check_p2p_sbp('ONSvMYlT', '51f77da9-5280-4fcc-88c1-dd6c1c1a8afe')))

@@ -12,7 +12,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from utils.transactions import transfer_stars
 from utils.tables import get_table
 from utils.schedulers import check_payment, stop_check_payment
-from utils.payment import get_crypto_payment_data, get_oxa_payment_data, _get_usdt_rub, get_wata_card_data, get_wata_sbp_data
+from utils.payment import get_crypto_payment_data, get_oxa_payment_data, _get_usdt_rub, get_wata_card_data, get_p2p_sbp
 from database.action_data_class import DataInteraction
 from config_data.config import load_config, Config
 from states.state_groups import startSG
@@ -84,7 +84,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     if app_id:
         application = await session.get_application(app_id)
     if not job or not app_id:
-        sbp_payment = await get_wata_sbp_data(event_from_user.id, amount)
+        sbp_payment = await get_p2p_sbp(amount)
         crypto_payment = await get_crypto_payment_data(usdt)
         oxa_payment = await get_oxa_payment_data(usdt)
         card_payment = await get_wata_card_data(event_from_user.id, amount)
@@ -106,7 +106,11 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
             check_payment,
             'interval',
             args=[bot, event_from_user.id, application.uid_key, session, scheduler],
-            kwargs={'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'), 'username': username, 'stars': stars},
+            kwargs={
+                'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'),
+                'username': username, 'stars': stars, 'card_id': sbp_payment.get('id'),
+                'order_id': sbp_payment.get('order_id')
+            },
             id=f'payment_{event_from_user.id}',
             seconds=10
         )

@@ -29,8 +29,8 @@ class CryptoBot:
 
 
 @dataclass
-class Lava:
-    secret_key: str
+class P2P:
+    api_key: str
 
 
 @dataclass
@@ -57,7 +57,7 @@ class Config:
     crypto_bot: CryptoBot
     fragment: Fragment
     oxa: Oxa
-    lava: Lava
+    p2p: P2P
     wata: Wata
 
 
@@ -85,8 +85,8 @@ def load_config(path: str | None = None) -> Config:
         oxa=Oxa(
             api_key=env('oxa_api_key')
         ),
-        lava=Lava(
-            secret_key=env('secret_key')
+        p2p=P2P(
+            api_key=env('p2p_api_token')
         ),
         wata=Wata(
             card_key=env('wata_card_key'),
