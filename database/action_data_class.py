@@ -195,6 +195,16 @@ class DataInteraction():
             result = await session.scalars(select(UsersTable))
         return result.fetchall()
 
+    async def get_ref_users(self, user_id: int):
+        async with self._sessions() as session:
+            result = await session.scalars(select(UsersTable).where(UsersTable.referral == user_id))
+        return result.fetchall()
+
+    async def get_sub_ref_users(self, user_id: int):
+        async with self._sessions() as session:
+            result = await session.scalars(select(UsersTable).where(UsersTable.sub_referral == user_id))
+        return result.fetchall()
+
     async def get_user(self, user_id: int):
         async with self._sessions() as session:
             result = await session.scalar(select(UsersTable).where(UsersTable.user_id == user_id))

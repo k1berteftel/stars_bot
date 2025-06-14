@@ -1,5 +1,8 @@
+import os
+
 from aiogram import Bot
-from aiogram.types import CallbackQuery, User, Message, ContentType
+from aiogram.utils.media_group import MediaGroupBuilder
+from aiogram.types import CallbackQuery, User, Message, ContentType, FSInputFile
 from aiogram_dialog import DialogManager, ShowMode, StartMode
 from aiogram_dialog.api.entities import MediaAttachment, MediaId
 from aiogram_dialog.widgets.kbd import Button, Select
@@ -7,6 +10,7 @@ from aiogram_dialog.widgets.input import ManagedTextInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from utils.transactions import transfer_stars
+from utils.tables import get_table
 from utils.schedulers import check_payment, stop_check_payment
 from utils.payment import get_crypto_payment_data, get_oxa_payment_data, _get_usdt_rub, get_wata_card_data, get_wata_sbp_data
 from database.action_data_class import DataInteraction
@@ -220,19 +224,59 @@ async def get_derive_amount(msg: Message, widget: ManagedTextInput, dialog_manag
         await msg.answer('❗️Сумма для вывода не может быть меньше 50')
         return
     session: DataInteraction = dialog_manager.middleware_data.get('session')
-    user = await session.get_user(msg.from_user.id)
-    if amount > user.earn:
+    msg_user = await session.get_user(msg.from_user.id)
+    if amount > msg_user.earn:
         await msg.answer('❗️Сумма для вывода должна быть не больше той что сейчас у вас')
         return
     username = msg.from_user.username
     if not username:
         await msg.answer(text='❗️Чтобы получить звезды, пожалуйста поставьте на свой аккаунт юзернейм')
         return
-    status = await transfer_stars(username, amount)
-    if not status:
-        await msg.answer(text='🚨Во время начисления звезд что-то пошло не так, пожалуйста обратитесь в поддержку')
-    await session.update_earn(msg.from_user.id, -amount)
-    await msg.answer('✅Звезды были успешно переведены')
+    ref_users = await session.get_ref_users(msg.from_user.id)
+    users = []
+    for user in ref_users:
+        users.append(
+            [
+                user.user_id,
+                user.name,
+                '@' + user.username if user.username else '-',
+                user.refs,
+                user.entry.strftime('%d-%m-%Y %H:%M')
+            ]
+        )
+    users.insert(0, ['User Id', 'Никнейм', 'Юзернейм', 'Рефералы', 'Первый запуск'])
+    table_1 = get_table(users, 'Рефералы')
+    sub_users = []
+    sub_ref_users = await session.get_sub_ref_users(msg.from_user.id)
+    for user in sub_ref_users:
+        sub_users.append(
+            [
+                user.user_id,
+                user.name,
+                '@' + user.username if user.username else '-',
+                user.refs,
+                user.entry.strftime('%d-%m-%Y %H:%M')
+            ]
+        )
+    sub_users.insert(0, ['User Id', 'Никнейм', 'Юзернейм', 'Рефералы', 'Первый запуск'])
+    table_2 = get_table(sub_users, 'Рефералы 2')
+    text = (f'<b>Заявка на вывод средств</b>\n\nДанные о пользователе:\n'
+            f'- Никнейм: {msg_user.name}\n - Username: @{msg_user.username}'
+            f'\n - Telegram Id: {msg.from_user.id}\n - Рефералы: {msg_user.refs}\n - Рефералы 2: {msg_user.sub_refs}'
+            f'\n - Общий баланс: {msg_user.earn}⭐️\n - <b>Сумма для вывода</b>: {amount}⭐️')
+    builder = MediaGroupBuilder(caption=text)
+    builder.add_document(FSInputFile(path=table_1))
+    builder.add_document(FSInputFile(path=table_2))
+    await msg.bot.send_media_group(
+        media=builder.build(),
+        chat_id=config.bot.admin_ids[0],
+    )
+    try:
+        os.remove(table_1)
+        os.remove(table_2)
+    except Exception:
+        ...
+    await msg.answer('✅Заявка на вывод средств была успешно отправлена')
     dialog_manager.dialog_data.clear()
     await dialog_manager.switch_to(startSG.ref_menu)
 
