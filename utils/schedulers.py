@@ -35,7 +35,8 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
         if not status:
             await bot.send_message(
                 chat_id=user_id,
-                text='🚨Во время начисления звезд что-то пошло не так, пожалуйста обратитесь в поддержку'
+                text=f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
+                     f'обратитесь в поддержку(№ заказа: <code>{app_id}</code>)'
             )
             if application.status != 2:
                 await session.update_application(app_id, 3, payment)

@@ -280,6 +280,7 @@ async def get_derive_amount(msg: Message, widget: ManagedTextInput, dialog_manag
         os.remove(table_2)
     except Exception:
         ...
+    await session.update_earn(msg.from_user.id, -amount)
     await msg.answer('✅Заявка на вывод средств была успешно отправлена')
     dialog_manager.dialog_data.clear()
     await dialog_manager.switch_to(startSG.ref_menu)

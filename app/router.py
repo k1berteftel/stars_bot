@@ -43,7 +43,8 @@ async def ping(response: Request):
         if not status:
             await bot.send_message(
                 chat_id=user_id,
-                text='🚨Во время начисления звезд что-то пошло не так, пожалуйста обратитесь в поддержку'
+                text=f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
+                     f'обратитесь в поддержку(№ заказа: <code>{application.uid_key}</code>)'
             )
             await session.update_application(application.uid_key, 3, payment)
             return "OK"
