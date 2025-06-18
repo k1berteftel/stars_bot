@@ -67,7 +67,10 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     oxa_url = dialog_manager.dialog_data.get('oxa_url')
     card_url = dialog_manager.dialog_data.get('card_url')
     prices = await session.get_prices()
+    promo = dialog_manager.dialog_data.get('promo')
     amount = int(round((stars * 1.21) / (1 - prices.charge / 100)))
+    if promo:
+        amount = amount - (amount * promo.percent / 100)
     usdt = round(amount / (await _get_usdt_rub()), 2)
     username = dialog_manager.dialog_data.get('username')
     if not username:
@@ -172,8 +175,7 @@ async def get_promo(msg: Message, widget: ManagedTextInput, dialog_manager: Dial
         await msg.answer('😔К сожалению такого промокода не было найдено или же вы уже вводили его')
         return
     await msg.answer('✅Промокод был успешно активирован')
-    amount = dialog_manager.dialog_data.get('amount')
-    dialog_manager.dialog_data['amount'] = amount - (amount * promo.percent / 100)
+    dialog_manager.dialog_data['promo'] = promo.percent
     await dialog_manager.switch_to(startSG.payment_menu)
 
 
