@@ -21,9 +21,12 @@ from states.state_groups import startSG
 config: Config = load_config()
 
 
-async def start_getter(event_from_user: User, **kwargs):
+async def start_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
     admin = False
-    if event_from_user.id in config.bot.admin_ids:
+    session: DataInteraction = dialog_manager.middleware_data.get('session')
+    admins = [user.user_id for user in await session.get_admins()]
+    admins.extend(config.bot.admin_ids)
+    if event_from_user.id in admins:
         admin = True
     media = MediaId(file_id='AgACAgIAAxkBAAIBQGgaN21XHo8C0ui8X_vXVD_1dp9BAAJg8DEb9dvQSFW59oxus4LOAQADAgADeAADNgQ')
     media = MediaAttachment(type=ContentType.PHOTO, file_id=media)
