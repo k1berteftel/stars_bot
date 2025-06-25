@@ -82,6 +82,8 @@ async def get_oxa_payment_data(amount: int | float):
                 print(await resp.json())
                 print(resp.status)
             data = await resp.json()
+    if not data['status'] != 200:
+        return get_oxa_payment_data(amount)
     return {
         'url': data['data']['payment_url'],
         'id': data['data']['track_id']

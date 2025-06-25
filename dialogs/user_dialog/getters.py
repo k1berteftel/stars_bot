@@ -73,7 +73,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     promo = dialog_manager.dialog_data.get('promo')
     amount = int(round((stars * 1.21) / (1 - prices.charge / 100)))
     if promo:
-        amount = amount - (amount * promo.percent / 100)
+        amount = amount - (amount * promo / 100)
     usdt = round(amount / (await _get_usdt_rub()), 2)
     username = dialog_manager.dialog_data.get('username')
     if not username:
