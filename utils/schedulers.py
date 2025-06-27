@@ -19,8 +19,8 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
     order_id = kwargs.get('order_id')
     crypto_bot = await check_crypto_payment(invoice_id)
     crypto = await check_oxa_payment(track_id)
-    #sbp = await check_p2p_sbp(order_id, card_id)
-    if crypto_bot or crypto: #or sbp:
+    sbp = await check_p2p_sbp(order_id, card_id)
+    if crypto_bot or crypto or sbp:
         username = kwargs.get('username')
         stars = kwargs.get('stars')
         status = await transfer_stars(username, stars)
@@ -30,13 +30,13 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
             payment = 'crypto_bot'
         if crypto:
             payment = 'crypto'
-        #if sbp:
-            #payment = 'sbp'
+        if sbp:
+            payment = 'sbp'
         if not status:
             await bot.send_message(
                 chat_id=user_id,
-                text=f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
-                     f'обратитесь в поддержку(№ заказа: <code>{app_id}</code>)'
+                text=(f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
+                      f'обратитесь в поддержку(№ заказа: <code>{app_id}</code>)')
             )
             if application.status != 2:
                 await session.update_application(app_id, 3, payment)

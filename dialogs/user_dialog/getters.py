@@ -90,7 +90,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     if app_id:
         application = await session.get_application(app_id)
     if not job or not app_id:
-        sbp_payment = await get_wata_sbp_data(event_from_user.id, amount)  # после фикса заменить
+        sbp_payment = await get_p2p_sbp(amount)  # после фикса заменить
         crypto_payment = await get_crypto_payment_data(usdt)
         oxa_payment = await get_oxa_payment_data(usdt)
         #card_payment = await get_wata_card_data(event_from_user.id, amount)
