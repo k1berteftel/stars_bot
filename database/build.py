@@ -4,7 +4,7 @@ from database.model import Base
 
 class PostgresBuild:
     def __init__(self, url: str):
-        self.engine = create_async_engine(url)
+        self.engine = create_async_engine(url, pool_size=20, max_overflow=5)
 
     async def create_tables(self, base):
         async with self.engine.begin() as conn:

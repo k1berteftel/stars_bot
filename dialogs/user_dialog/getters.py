@@ -118,7 +118,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
                 'order_id': sbp_payment.get('order_id')
             },
             id=f'payment_{event_from_user.id}',
-            seconds=10
+            seconds=15
         )
         job = scheduler.get_job(f'stop_payment_{event_from_user.id}')
         if not job:
@@ -153,7 +153,10 @@ async def close_payment(clb: CallbackQuery, widget: Button, dialog_manager: Dial
         job.remove()
     dialog_manager.dialog_data.clear()
     await dialog_manager.done()
-    await clb.message.delete()
+    try:
+        await clb.message.delete()
+    except Exception:
+        ...
     await dialog_manager.start(startSG.start, mode=StartMode.RESET_STACK)
 
 
