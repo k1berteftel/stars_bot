@@ -155,7 +155,7 @@ async def check_p2p_sbp(order_id: str, id: str):
             return False
 
 
-async def check_oxa_payment(track_id: str) -> bool:
+async def check_oxa_payment(track_id: str, counter: int = 1) -> bool:
     url = 'https://api.oxapay.com/v1/payment/' + track_id
     headers = {
         'merchant_api_key': merchant_api_key,
@@ -166,7 +166,12 @@ async def check_oxa_payment(track_id: str) -> bool:
             if resp.status != 200:
                 print('oxa check error', await resp.json())
                 return False
-            data = await resp.json()
+            try:
+                data = await resp.json()
+            except Exception:
+                if counter >= 5:
+                    return False
+                return await check_oxa_payment(track_id, counter+1)
     if data['data']['status'] == 'paid':
         return True
     return False
@@ -189,4 +194,4 @@ async def _get_usdt_rub() -> float:
             return float(price[value.start():value.end():].replace(',', '.'))
 
 
-#print(asyncio.run(check_p2p_sbp('ONSvMYlT', '51f77da9-5280-4fcc-88c1-dd6c1c1a8afe')))
+#print(asyncio.run(check_oxa_payment('103126318')))
