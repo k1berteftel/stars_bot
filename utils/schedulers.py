@@ -23,8 +23,6 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
     if crypto_bot or crypto or sbp:
         username = kwargs.get('username')
         stars = kwargs.get('stars')
-        status = await transfer_stars(username, stars)
-        application = await session.get_application(app_id)
         payment = ''
         if crypto_bot:
             payment = 'crypto_bot'
@@ -32,6 +30,8 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
             payment = 'crypto'
         if sbp:
             payment = 'sbp'
+        status = await transfer_stars(username, stars)
+        application = await session.get_application(app_id)
         if not status:
             await bot.send_message(
                 chat_id=user_id,
@@ -51,16 +51,16 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
             chat_id=user_id,
             text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
         )
-        if application.status != 2:
-            await session.update_application(app_id, 2, payment)
-        await session.add_payment()
-        await session.update_buys(user_id, stars)
         job = scheduler.get_job(f'payment_{user_id}')
         if job:
             job.remove()
         stop_job = scheduler.get_job(f'stop_payment_{user_id}')
         if stop_job:
             stop_job.remove()
+        if application.status != 2:
+            await session.update_application(app_id, 2, payment)
+        await session.add_payment()
+        await session.update_buys(user_id, stars)
         return
     return
 
