@@ -41,4 +41,4 @@ async def transfer_stars(username: str, stars: int) -> bool:
 
 
 
-print(asyncio.run(transfer_stars('farion', 50)))
+#print(asyncio.run(transfer_stars('farion', 50)))
