@@ -25,8 +25,12 @@ async def transfer_stars(username: str, stars: int) -> bool:
         async with session.post(url, json=data, headers=headers, ssl=False) as resp:
             print(resp.status)
             if resp.status not in [200, 201]:
-                print(await resp.json())
-                logging.error(await resp.json())
+                print(await resp.content.read())
+                logging.error(await resp.content.read())
+                try:
+                    logging.error(await resp.json())
+                except Exception:
+                    ...
                 return False
             data = await resp.json()
             if data['ok'] != True:
@@ -37,4 +41,4 @@ async def transfer_stars(username: str, stars: int) -> bool:
 
 
 
-#print(asyncio.run(transfer_stars('farion', 50)))
+print(asyncio.run(transfer_stars('farion', 50)))
