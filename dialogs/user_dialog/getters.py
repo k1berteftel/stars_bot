@@ -161,9 +161,9 @@ async def close_payment(clb: CallbackQuery, widget: Button, dialog_manager: Dial
 
 
 async def get_stars_amount(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
-    await msg.answer('На данный момент в боте ведутся <b>технические работы</b>, приносим свои извинения🙏')
-    await dialog_manager.switch_to(startSG.start)
-    return
+    #await msg.answer('На данный момент в боте ведутся <b>технические работы</b>, приносим свои извинения🙏   ')
+    #await dialog_manager.switch_to(startSG.start)
+    #return
     try:
         amount = int(text)
     except Exception:
