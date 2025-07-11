@@ -33,11 +33,14 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
         status = await transfer_stars(username, stars)
         application = await session.get_application(app_id)
         if not status:
-            await bot.send_message(
-                chat_id=user_id,
-                text=(f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
-                      f'обратитесь в поддержку(№ заказа: <code>{app_id}</code>)')
-            )
+            try:
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=(f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
+                          f'обратитесь в поддержку(№ заказа: <code>{app_id}</code>)')
+                )
+            except Exception:
+                ...
             if application.status != 2:
                 await session.update_application(app_id, 3, payment)
             job = scheduler.get_job(f'payment_{user_id}')
@@ -47,10 +50,13 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
             if stop_job:
                 stop_job.remove()
             return
-        await bot.send_message(
-            chat_id=user_id,
-            text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
-        )
+        try:
+            await bot.send_message(
+                chat_id=user_id,
+                text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
+            )
+        except Exception:
+            ...
         job = scheduler.get_job(f'payment_{user_id}')
         if job:
             job.remove()
