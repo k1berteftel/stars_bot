@@ -95,7 +95,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         amount = int(round(usdt * usdt_rub) / (1 - prices.premium_charge / 100))
         usdt = round(amount / (usdt_rub), 2)
         text = (f'<b>Номер заказа</b>: <code>{{uid_key}}</code>\n\n<b>Сумма к оплате</b>: <code>{amount}₽ ({usdt}$)</code>\n'
-                f'<b>Вы покупаете</b>: <code>Telegram Premium на {currency} месяц/месяцев</code>\n<b>Получатель</b>: <code>{username}</code>\n')
+                f'<b>Вы покупаете</b>: <code>Premium на {currency} месяца(ев)</code>\n<b>Получатель</b>: <code>{username}</code>\n')
     else:
         currency = dialog_manager.dialog_data.get('amount')
         ton_usdt = await _get_ton_usdt()
@@ -232,6 +232,7 @@ async def get_ton_amount(msg: Message, widget: ManagedTextInput, dialog_manager:
         await msg.answer('❗️Кол-во TON должно быть больше 1 и меньше 100')
         return
     dialog_manager.dialog_data['amount'] = amount
+    await dialog_manager.switch_to(startSG.payment_menu)
 
 
 async def get_rate_amount_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
