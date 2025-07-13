@@ -162,9 +162,9 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
 async def close_payment(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
     scheduler: AsyncIOScheduler = dialog_manager.middleware_data.get('scheduler')
     session: DataInteraction = dialog_manager.middleware_data.get('session')
-    application = await session.get_application(dialog_manager.dialog_data.get('uid_key'))
+    application = await session.get_application(dialog_manager.dialog_data.get('app_id'))
     if application.status != 2:
-        await session.update_application(dialog_manager.dialog_data.get('uid_key'), 0, None)
+        await session.update_application(dialog_manager.dialog_data.get('app_id'), 0, None)
     job = scheduler.get_job(f'payment_{clb.from_user.id}')
     if job:
         job.remove()
@@ -318,7 +318,7 @@ async def ref_menu_getter(event_from_user: User, dialog_manager: DialogManager, 
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     user = await session.get_user(event_from_user.id)
     text = (f'<b>👥 Партнерская программа</b>\n\nПриглашайте людей и получайте по 3⭐️ за '
-            f'каждого приглашенного и по 2⭐️ за каждого приглашенного вашим рефералом\n\n'
+            f'каждого приглашенного\n\n'
             f'<b>Ваша партнерская ссылка:\n</b>t.me/TrustStarsBot?start={event_from_user.id}\n\n<b>Статистика вашей партнерки:</b>'
             f'\n\t- Рефералов: {user.refs}\n\t- Баланс: {user.earn} ⭐️\n\n<b>Минимальная сумма выплаты - 100 ⭐️</b>')
     return {

@@ -32,10 +32,6 @@ async def start_dialog(msg: Message, dialog_manager: DialogManager, session: Dat
                 if args in users:
                     referral = args
                     await session.add_refs(args)
-                    user = await session.get_user(referral)
-                    if user.referral:
-                        sub_referral = user.referral
-                        await session.add_sub_refs(sub_referral)
             except Exception as err:
                 print(err)
     await session.add_user(msg.from_user.id, msg.from_user.username if msg.from_user.username else 'Отсутствует',
