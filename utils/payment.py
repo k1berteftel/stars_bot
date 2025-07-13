@@ -196,4 +196,4 @@ async def _get_ton_usdt() -> float:
 
 
 
-print(asyncio.run(_get_usdt_rub()))
+#print(asyncio.run(_get_usdt_rub()))
