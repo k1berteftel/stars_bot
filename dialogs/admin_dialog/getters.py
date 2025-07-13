@@ -123,12 +123,19 @@ async def application_menu_getter(dialog_manager: DialogManager, **kwargs):
     }
     payments = {
         None: 'Не оплачен',
-        'sbp': 'СБП (Wata)',
-        'card': 'Карта (Wata)',
+        'sbp': 'СБП',
+        'card': 'Карта',
         'crypto': 'Крипта (Oxa pay)',
         'crypto_bot': 'Криптобот'
     }
-    text = (f'<b>Номер заказа</b>: {application.uid_key}\n<b>Создал</b>: {application.user_id} (@{user.username})'
+    types = {
+        'stars': 'Покупка звезд',
+        None: 'Покупка звезд',
+        'premium': 'Покупка премиум',
+        'ton': 'Покупка TON'
+    }
+    text = (f'<b>Тип заказа</b>: {types.get(application.type)}\n'
+            f'<b>Номер заказа</b>: {application.uid_key}\n<b>Создал</b>: {application.user_id} (@{user.username})'
             f'\n<b>Получатель</b>: @{application.receiver}\n<b>Сумма</b>: {application.amount} звезд\n'
             f'<b>Стоимость</b>: {float(application.rub)}₽ ({application.usdt}$)\n<b>Статус заказа</b>: {statuses[application.status]}'
             f'\n<b>Статус оплаты</b>: {payments[application.payment]}'
@@ -139,7 +146,17 @@ async def application_menu_getter(dialog_manager: DialogManager, **kwargs):
 async def charge_menu_getter(dialog_manager: DialogManager, **kwargs):
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     prices = await session.get_prices()
-    return {'charge': prices.charge}
+    return {
+        'stars_charge': prices.stars_charge,
+        'premium_charge': prices.premium_charge,
+        'ton_charge': prices.ton_charge
+    }
+
+
+async def charge_choose_switcher(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
+    charge_name = clb.data.split('_')[0]
+    dialog_manager.dialog_data['name'] = charge_name + '_charge'
+    await dialog_manager.switch_to(adminSG.get_charge)
 
 
 async def get_charge(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
@@ -149,7 +166,13 @@ async def get_charge(msg: Message, widget: ManagedTextInput, dialog_manager: Dia
         await msg.answer('Введите пожалуйста число (от 0 до 100')
         return
     session: DataInteraction = dialog_manager.middleware_data.get('session')
-    await session.set_charge(charge)
+    name = dialog_manager.dialog_data.get('name')
+    data = {
+        name: charge
+    }
+    await session.set_charge(**data)
+    await msg.answer('Данные были обновлены')
+    await msg.delete()
     await dialog_manager.switch_to(adminSG.charge_menu)
 
 

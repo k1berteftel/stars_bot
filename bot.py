@@ -103,7 +103,7 @@ async def run_aiogram():
 
     # подключаем middleware
     dp.update.middleware(TransferObjectsMiddleware())
-    dp.update.middleware(RemindMiddleware())
+    dp.callback_query.middleware(RemindMiddleware())
 
     # запуск
     await bot.delete_webhook(drop_pending_updates=True)

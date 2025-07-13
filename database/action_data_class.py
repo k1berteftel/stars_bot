@@ -1,4 +1,5 @@
 import datetime
+from typing import Literal
 
 from sqlalchemy import select, insert, update, column, text, delete, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -10,10 +11,8 @@ from database.model import (UsersTable, DeeplinksTable, OneTimeLinksIdsTable, Ad
 async def setup_database(session: async_sessionmaker):
     async with session() as session:
         await session.execute(insert(PricesTable).values(
-            charge=15
         ))
         await session.execute(insert(StaticsTable).values(
-            payments=0
         ))
         await session.commit()
 
@@ -119,7 +118,7 @@ class DataInteraction():
             await session.commit()
 
     async def add_application(self, user_id: int, receiver: str,
-                              amount: int, rub: int, usdt: float, count=1) -> ApplicationsTable:
+                              amount: int, rub: int, usdt: float, buy: Literal['stars', 'premium', 'ton'], count=1) -> ApplicationsTable:
         applications = await self.get_applications()
         uid_key = applications[-1].uid_key + count if applications else 1000
         async with self._sessions() as session:
@@ -130,11 +129,12 @@ class DataInteraction():
                     receiver=receiver,
                     amount=amount,
                     rub=rub,
-                    usdt=usdt
+                    usdt=usdt,
+                    type=buy
                 ))
                 await session.commit()
             except Exception:
-                return await self.add_application(user_id, receiver, amount, rub, usdt, count+1)
+                return await self.add_application(user_id, receiver, amount, rub, usdt, buy, count+1)
             return await self.get_application(uid_key)
 
     async def add_promo(self, promo: str, limit: int, percent: int):
@@ -258,10 +258,10 @@ class DataInteraction():
             ))
             await session.commit()
 
-    async def set_charge(self, charge: int):
+    async def set_charge(self, **kwargs):
         async with self._sessions() as session:
             await session.execute(update(PricesTable).values(
-                charge=charge
+                kwargs
             ))
             await session.commit()
 

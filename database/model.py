@@ -79,7 +79,9 @@ class PricesTable(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
-    charge: Mapped[int] = mapped_column(Integer, default=15)
+    stars_charge: Mapped[int] = mapped_column(Integer, default=15)
+    premium_charge: Mapped[int] = mapped_column(Integer, default=15)
+    ton_charge: Mapped[int] = mapped_column(Integer, default=15)
 
 
 class ApplicationsTable(Base):
@@ -101,6 +103,7 @@ class ApplicationsTable(Base):
     3 - Ошибка выполнения
     """
     payment: Mapped[Literal['sbp', 'card', 'crypto_bot', 'crypto']] = mapped_column(VARCHAR, default=None, nullable=True)
+    type: Mapped[Literal['stars', 'premium', 'ton']] = mapped_column(VARCHAR, default=None, server_default=None, nullable=True)
 
 
 class StaticsTable(Base):

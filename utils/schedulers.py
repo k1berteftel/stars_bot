@@ -7,12 +7,12 @@ from aiogram_dialog import DialogManager
 from aiogram.types import InlineKeyboardMarkup, Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from .transactions import transfer_stars
+from .transactions import transfer_stars, transfer_ton, transfer_premium
 from .payment import check_crypto_payment, check_oxa_payment, check_p2p_sbp
 from database.action_data_class import DataInteraction
 
 
-async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataInteraction, scheduler: AsyncIOScheduler, **kwargs):
+async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataInteraction, scheduler: AsyncIOScheduler, buy: str, **kwargs):
     invoice_id = kwargs.get('invoice_id')
     track_id = kwargs.get('track_id')
     card_id = kwargs.get('card_id')
@@ -22,7 +22,7 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
     sbp = await check_p2p_sbp(order_id, card_id)
     if crypto_bot or crypto or sbp:
         username = kwargs.get('username')
-        stars = kwargs.get('stars')
+        currency = kwargs.get('currency')
         payment = ''
         if crypto_bot:
             payment = 'crypto_bot'
@@ -30,7 +30,12 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
             payment = 'crypto'
         if sbp:
             payment = 'sbp'
-        status = await transfer_stars(username, stars)
+        if buy == 'stars':
+            status = await transfer_stars(username, currency)
+        elif buy == 'premium':
+            status = await transfer_premium(username, currency)
+        else:
+            status = await transfer_ton(username, currency)
         application = await session.get_application(app_id)
         if not status:
             try:
@@ -66,7 +71,8 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
         if application.status != 2:
             await session.update_application(app_id, 2, payment)
         await session.add_payment()
-        await session.update_buys(user_id, stars)
+        if buy == 'stars':
+            await session.update_buys(user_id, currency)
         return
     return
 

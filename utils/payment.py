@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import json
 import uuid
 import re
@@ -20,50 +21,17 @@ merchant_api_key = config.oxa.api_key
 crypto_bot = AioCryptoPay(token=config.crypto_bot.token, network=Networks.MAIN_NET)
 
 
-async def get_wata_card_data(user_id: int, price: int) -> dict | bool:
-    headers = {
-        'Authorization': f'Bearer {config.wata.card_key}',
-        'Content-Type': 'application/json'
-    }
-    data = {
-        "amount": float(price),
-        "currency": "RUB",
-        "orderId": str(user_id)
-    }
-    async with ClientSession() as session:
-        async with session.post('https://api.wata.pro/api/h2h/links', json=data, headers=headers) as resp:
-            if resp.status != 200:
-                print(await resp.json())
-                print(resp.status)
-                return False
-            data = await resp.json()
-    return {
-        'id': data['id'],
-        'url': data['url']
-    }
-
-
-async def get_wata_sbp_data(user_id: int, price: int) -> dict | bool:
-    headers = {
-        'Authorization': f'Bearer {config.wata.sbp_key}',
-        'Content-Type': 'application/json'
-    }
-    data = {
-        "amount": float(price),
-        "currency": "RUB",
-        "orderId": str(user_id)
-    }
-    async with ClientSession() as session:
-        async with session.post('https://api.wata.pro/api/h2h/links', json=data, headers=headers) as resp:
-            if resp.status != 200:
-                print(await resp.json())
-                print(resp.status)
-                return False
-            data = await resp.json()
-    return {
-        'id': data['id'],
-        'url': data['url']
-    }
+def _get_signature(data: dict, api_key: str):
+    sorted_data = dict(sorted(data.items()))
+    message = '|'.join(str(v) for v in sorted_data.values())
+    print(message)
+    signature = hmac.new(
+        key=api_key.encode('utf-8'),
+        msg=message.encode('utf-8'),
+        digestmod=hashlib.sha256
+    ).hexdigest()
+    sorted_data['signature'] = signature
+    return sorted_data
 
 
 async def get_oxa_payment_data(amount: int | float):
@@ -132,6 +100,31 @@ async def get_p2p_sbp(amount: int):
     }
 
 
+async def get_freekassa_card(amount: int):
+    url = 'https://api.fk.life/v1/orders/create'
+    data = {
+        'shopId': 32219,
+        'nonce': int(datetime.datetime.today().timestamp()),
+        'i': 36,
+        'email': 'Sh.z.a.u.r05@gmail.com',
+        'ip': '80.80.116.211',
+        'amount': float(amount),
+        'currency': 'RUB'
+    }
+    print(config.freekassa.api_key)
+    print(_get_signature(data, config.freekassa.api_key))
+    data = _get_signature(data, config.freekassa.api_key)
+    async with ClientSession() as session:
+        async with session.post(url, json=data) as resp:
+            if resp.status != 200:
+                print(await resp.json())
+                print(resp.status)
+                return False
+            data = await resp.json()
+    print(data)
+
+
+
 async def check_p2p_sbp(order_id: str, id: str):
     async with ClientSession() as session:
         url = 'https://p2pkassa.live/api/v1/getpayAcquiring'
@@ -185,13 +178,22 @@ async def check_crypto_payment(invoice_id: int) -> bool:
 
 
 async def _get_usdt_rub() -> float:
+    url = 'https://open.er-api.com/v6/latest/USD'
     async with ClientSession() as session:
-        async with session.get('https://www.rbc.ru/crypto/currency/usdtrub') as res:
-            resp = await res.text()
-            soup = BeautifulSoup(resp, 'lxml')
-            price = soup.find('div', class_='chart__subtitle').text.strip()
-            value = re.search(r'\d+,\d+', price)
-            return float(price[value.start():value.end():].replace(',', '.'))
+        async with session.get(url) as res:
+            data = await res.json()
+            rub = data['rates']['RUB']
+    return float(rub)
 
 
-#print(asyncio.run(check_oxa_payment('103126318')))
+async def _get_ton_usdt() -> float:
+    url = 'https://api.coingecko.com/api/v3/coins/the-open-network'
+    async with ClientSession() as session:
+        async with session.get(url) as res:
+            resp = await res.json()
+            ton = float(resp['market_data']['current_price']['usd'])
+    return ton
+
+
+
+print(asyncio.run(_get_usdt_rub()))

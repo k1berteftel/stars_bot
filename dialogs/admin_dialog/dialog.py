@@ -44,15 +44,26 @@ admin_dialog = Dialog(
         state=adminSG.application_menu
     ),
     Window(
-        Format('<b>Действующая наценка к курсу звезд: {charge}%</b>\n\n'
-               '<em>Чтобы поменять наценку отправьте новое значение</em>'),
-        TextInput(
-            id='get_charge',
-            on_success=getters.get_charge
+        Format('<b>Действующие наценки</b>\n - Для звезд: {stars_charge}%'
+               '\n - Для премиума: {premium_charge}%\n - Для TON: {ton_charge}\n\n'
+               '<em>Чтобы поменять наценку выберите курс для смены</em>'),
+        Column(
+            Button(Const('Звезды'), id='stars_choose', on_click=getters.charge_choose_switcher),
+            Button(Const('Премиум'), id='premium_choose', on_click=getters.charge_choose_switcher),
+            Button(Const('TON'), id='ton_choose', on_click=getters.charge_choose_switcher),
         ),
         SwitchTo(Const('🔙 Назад'), id='back', state=adminSG.start),
         getter=getters.charge_menu_getter,
         state=adminSG.charge_menu
+    ),
+    Window(
+        Const('Введите новое значение для наценки в %'),
+        TextInput(
+            id='get_charge',
+            on_success=getters.get_charge
+        ),
+        SwitchTo(Const('🔙 Назад'), id='back_charge_menu', state=adminSG.charge_menu),
+        state=adminSG.get_charge
     ),
     Window(
         Format('<b>Меню управления промокодами</b>\n\n'

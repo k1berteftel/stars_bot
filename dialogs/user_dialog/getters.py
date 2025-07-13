@@ -12,13 +12,20 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from utils.transactions import transfer_stars
 from utils.tables import get_table
 from utils.schedulers import check_payment, stop_check_payment
-from utils.payment import get_crypto_payment_data, get_oxa_payment_data, _get_usdt_rub, get_wata_card_data, get_p2p_sbp, get_wata_sbp_data
+from utils.payment import get_crypto_payment_data, get_oxa_payment_data, get_p2p_sbp
+from utils.payment import _get_ton_usdt, _get_usdt_rub
+from utils.transactions import check_user_premium
 from database.action_data_class import DataInteraction
 from config_data.config import load_config, Config
 from states.state_groups import startSG
 
-
 config: Config = load_config()
+
+premium_usdt = {
+    3: 12,
+    6: 16,
+    12: 29
+}
 
 
 async def start_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
@@ -35,34 +42,35 @@ async def start_getter(event_from_user: User, dialog_manager: DialogManager, **k
 
 
 async def rules_menu_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
-    text = ('<b>Политика использования</b>\nЦель магазина: Магазин предоставляет услуги по продаже звезд в Telegram.\n\n'
-            'Правила использования: Пользователи обязаны соблюдать все применимые законы и правила платформ,'
-            ' на которых они используют купленные звезды. Запрещены попытки обмана, мошенничество и другие '
-            'недопустимые действия.\n\nПрием платежей: Мы принимаем платежи через указанные методы, '
-            'обеспечивая безопасность и конфиденциальность ваших данных.\n\nОбязательства магазина:'
-            ' Магазин обязуется предоставить вам купленные звезды после успешной оплаты.\n\nОтветственность '
-            'пользователя: Вы несете ответственность за предоставление правильной информации при заказе услуги.'
-            ' Пользователи должны предоставить корректные данные для успешного выполнения заказа.\n\nЗапрещенные'
-            ' действия: Запрещены действия, направленные на мошенничество, включая попытки '
-            'возврата средств после получения услуги.\n\n<b>Политика возврата</b>\nУсловия возврата: Вы можете '
-            'запросить возврат средств, если не получили звезд. Нужны скрины оплаты и главной страницы бота.\n\n'
-            'Процедура возврата: Для запроса возврата, свяжитесь с нашей службой поддержки по указанным '
-            'контактным данным. Мы рассмотрим ваш запрос и произведем возврат средств на вашу карту/кошелек.\n\n'
-            'Сроки возврата: Вы получите средства в течение 3 рабочих дней.\n\n<b>Политика конфиденциальности</b>\n'
-            'Сбор информации: Мы можем собирать определенную информацию от пользователей для обработки заказов '
-            'и улучшения сервиса.\n\nИспользование информации: Мы обеспечиваем безопасное и конфиденциальное '
-            'хранение ваших данных. Информация будет использована исключительно для обработки заказов и '
-            'обратной связи с вами.\n\nРазглашение информации: Мы не раскроем вашу информацию третьим '
-            'лицам, за исключением случаев, предусмотренных законом или в случаях, когда это необходимо '
-            'для выполнения заказа (например, передача информации платежным системам).\n\nСогласие пользователя: '
-            'Используя наши услуги, вы соглашаетесь с нашей политикой конфиденциальности.')
+    text = (
+        '<b>Политика использования</b>\nЦель магазина: Магазин предоставляет услуги по продаже звезд в Telegram.\n\n'
+        'Правила использования: Пользователи обязаны соблюдать все применимые законы и правила платформ,'
+        ' на которых они используют купленные звезды. Запрещены попытки обмана, мошенничество и другие '
+        'недопустимые действия.\n\nПрием платежей: Мы принимаем платежи через указанные методы, '
+        'обеспечивая безопасность и конфиденциальность ваших данных.\n\nОбязательства магазина:'
+        ' Магазин обязуется предоставить вам купленные звезды после успешной оплаты.\n\nОтветственность '
+        'пользователя: Вы несете ответственность за предоставление правильной информации при заказе услуги.'
+        ' Пользователи должны предоставить корректные данные для успешного выполнения заказа.\n\nЗапрещенные'
+        ' действия: Запрещены действия, направленные на мошенничество, включая попытки '
+        'возврата средств после получения услуги.\n\n<b>Политика возврата</b>\nУсловия возврата: Вы можете '
+        'запросить возврат средств, если не получили звезд. Нужны скрины оплаты и главной страницы бота.\n\n'
+        'Процедура возврата: Для запроса возврата, свяжитесь с нашей службой поддержки по указанным '
+        'контактным данным. Мы рассмотрим ваш запрос и произведем возврат средств на вашу карту/кошелек.\n\n'
+        'Сроки возврата: Вы получите средства в течение 3 рабочих дней.\n\n<b>Политика конфиденциальности</b>\n'
+        'Сбор информации: Мы можем собирать определенную информацию от пользователей для обработки заказов '
+        'и улучшения сервиса.\n\nИспользование информации: Мы обеспечиваем безопасное и конфиденциальное '
+        'хранение ваших данных. Информация будет использована исключительно для обработки заказов и '
+        'обратной связи с вами.\n\nРазглашение информации: Мы не раскроем вашу информацию третьим '
+        'лицам, за исключением случаев, предусмотренных законом или в случаях, когда это необходимо '
+        'для выполнения заказа (например, передача информации платежным системам).\n\nСогласие пользователя: '
+        'Используя наши услуги, вы соглашаетесь с нашей политикой конфиденциальности.')
     return {'text': text}
 
 
 async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     bot: Bot = dialog_manager.middleware_data.get('bot')
-    stars = dialog_manager.dialog_data.get('amount')
+    buy = dialog_manager.dialog_data.get('buy')
     scheduler: AsyncIOScheduler = dialog_manager.middleware_data.get('scheduler')
     job = scheduler.get_job(f'payment_{event_from_user.id}')
     crypto_url = dialog_manager.dialog_data.get('crypto_url')
@@ -70,51 +78,64 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     oxa_url = dialog_manager.dialog_data.get('oxa_url')
     card_url = dialog_manager.dialog_data.get('card_url')
     prices = await session.get_prices()
-    promo = dialog_manager.dialog_data.get('promo')
-    amount = int(round((stars * 1.21) / (1 - prices.charge / 100)))
-    if promo:
-        amount = amount - (amount * promo / 100)
-    usdt = round(amount / (78), 2)  # await _get_usdt_rub() - перестал отображаться курс
+    usdt_rub = await _get_usdt_rub()
     username = dialog_manager.dialog_data.get('username')
-    if not username:
-        username = event_from_user.username
-    if not event_from_user.username and username:
-        await bot.send_message(
-            chat_id=event_from_user.id,
-            text='❗️Чтобы покупать звезды, пожалуйста поставьте на свой аккаунт юзернейм'
-        )
-        dialog_manager.dialog_data.clear()
-        await dialog_manager.switch_to(startSG.start)
-        return
+    if buy == 'stars':
+        currency = dialog_manager.dialog_data.get('amount')
+        promo = dialog_manager.dialog_data.get('promo')
+        amount = int(round((currency * 1.21) / (1 - prices.stars_charge / 100)))
+        if promo:
+            amount = amount - (amount * promo / 100)
+        usdt = round(amount / (usdt_rub), 2)
+        text = (f'<b>Номер заказа</b>: <code>{{uid_key}}</code>\n\n<b>Сумма к оплате</b>: <code>{amount}₽ ({usdt}$)</code>\n'
+                f'<b>Вы покупаете</b>: <code>{currency} звезд</code>\n<b>Получатель</b>: <code>{username}</code>\n')
+    elif buy == 'premium':
+        currency = dialog_manager.dialog_data.get('months')
+        usdt = premium_usdt[currency]
+        amount = int(round(usdt * usdt_rub) / (1 - prices.premium_charge / 100))
+        usdt = round(amount / (usdt_rub), 2)
+        text = (f'<b>Номер заказа</b>: <code>{{uid_key}}</code>\n\n<b>Сумма к оплате</b>: <code>{amount}₽ ({usdt}$)</code>\n'
+                f'<b>Вы покупаете</b>: <code>Telegram Premium на {currency} месяц/месяцев</code>\n<b>Получатель</b>: <code>{username}</code>\n')
+    else:
+        currency = dialog_manager.dialog_data.get('amount')
+        ton_usdt = await _get_ton_usdt()
+        usdt = currency * ton_usdt
+        amount = int(round((usdt * usdt_rub) / (1 - prices.ton_charge / 100)))
+        usdt = round(amount / (usdt_rub), 2)
+        text = (f'<b>Номер заказа</b>: <code>{{uid_key}}</code>\n\n<b>Сумма к оплате</b>: <code>{amount}₽ ({usdt}$)</code>\n'
+                f'<b>Вы покупаете</b>: <code>{currency} TON</code>\n<b>Получатель</b>: <code>{username}</code>\n')
     app_id = dialog_manager.dialog_data.get('app_id')
     if app_id:
+        text = text.format(uid_key=app_id)
         application = await session.get_application(app_id)
     if not job or not app_id:
         sbp_payment = await get_p2p_sbp(amount)  # после фикса заменить
         crypto_payment = await get_crypto_payment_data(usdt)
         oxa_payment = await get_oxa_payment_data(usdt)
-        #card_payment = await get_wata_card_data(event_from_user.id, amount)
+        # card_payment = await get_wata_card_data(event_from_user.id, amount)
         dialog_manager.dialog_data['sbp_url'] = sbp_payment.get('url')
         dialog_manager.dialog_data['crypto_url'] = crypto_payment.get('url')
         dialog_manager.dialog_data['oxa_url'] = oxa_payment.get('url')
-        #dialog_manager.dialog_data['card_url'] = card_payment.get('url')
+        # dialog_manager.dialog_data['card_url'] = card_payment.get('url')
         crypto_url = crypto_payment.get('url')
         sbp_url = sbp_payment.get('url')
         oxa_url = oxa_payment.get('url')
-        #card_url = card_payment.get('url')
-        application = await session.add_application(event_from_user.id, username, stars, amount, usdt)
+        # card_url = card_payment.get('url')
+        application = await session.add_application(event_from_user.id, username, currency, amount, usdt, buy)
+        app_id = application.uid_key
+        text = text.format(uid_key=app_id)
         dialog_manager.dialog_data['app_id'] = app_id
-        dialog_manager.dialog_data['uid_key'] = application.uid_key
         job = scheduler.get_job(job_id=f'payment_{event_from_user.id}')
         if job:
             job.remove()
         scheduler.add_job(
             check_payment,
             'interval',
-            args=[bot, event_from_user.id, application.uid_key, session, scheduler],
+            args=[bot, event_from_user.id, application.uid_key, session, scheduler, buy],
             kwargs={
                 'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'),
-                'username': username, 'stars': stars, 'card_id': sbp_payment.get('id'),
+                'username': username, 'card_id': sbp_payment.get('id'),
+                'currency': currency,
                 'order_id': sbp_payment.get('order_id')
             },
             id=f'payment_{event_from_user.id}',
@@ -130,15 +151,11 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
                 minutes=30
             )
     return {
+        'text': text,
         'crypto_link': crypto_url,
         'oxa_link': oxa_url,
         'sbp_link': sbp_url,
-        #'card_link': card_url,
-        'uid_key': application.uid_key,
-        'rub': float(amount),
-        'usdt': usdt,
-        'amount': stars,
-        'username': username
+        # 'card_link': card_url,
     }
 
 
@@ -160,10 +177,31 @@ async def close_payment(clb: CallbackQuery, widget: Button, dialog_manager: Dial
     await dialog_manager.start(startSG.start, mode=StartMode.RESET_STACK)
 
 
+async def buy_choose(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
+    buy = clb.data.split('_')[0]
+    dialog_manager.dialog_data.clear()
+    dialog_manager.dialog_data['buy'] = buy
+    if buy == 'ton':
+        await dialog_manager.switch_to(startSG.ton_receipt_menu)
+        return
+    await dialog_manager.switch_to(startSG.get_username)
+
+
+async def get_username_getter(dialog_manager: DialogManager, **kwargs):
+    buy = dialog_manager.dialog_data.get('buy')
+    if buy == 'ton':
+        text = 'TON'
+    elif buy == 'premium':
+        text = 'Премиум'
+    else:
+        text = 'Звезды'
+    return {'present': text}
+
+
 async def get_stars_amount(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
-    #await msg.answer('На данный момент в боте ведутся <b>технические работы</b>, приносим свои извинения🙏   ')
-    #await dialog_manager.switch_to(startSG.start)
-    #return
+    # await msg.answer('На данный момент в боте ведутся <b>технические работы</b>, приносим свои извинения🙏   ')
+    # await dialog_manager.switch_to(startSG.start)
+    # return
     try:
         amount = int(text)
     except Exception:
@@ -175,6 +213,47 @@ async def get_stars_amount(msg: Message, widget: ManagedTextInput, dialog_manage
         return
     dialog_manager.dialog_data['amount'] = amount
     await dialog_manager.switch_to(startSG.get_promo)
+
+
+async def premium_rate_choose(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
+    months = int(clb.data.split('_')[0])
+    dialog_manager.dialog_data['months'] = months
+    await dialog_manager.switch_to(startSG.payment_menu)
+
+
+async def get_ton_amount(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
+    try:
+        amount = int(text)
+    except Exception:
+        await msg.delete()
+        await msg.answer('❗️Кол-во TON должно быть числом, пожалуйста попробуйте снова')
+        return
+    if not (1 < amount < 100):
+        await msg.answer('❗️Кол-во TON должно быть больше 1 и меньше 100')
+        return
+    dialog_manager.dialog_data['amount'] = amount
+
+
+async def get_rate_amount_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
+    username = dialog_manager.dialog_data.get('username')
+    address = dialog_manager.dialog_data.get('address')
+    buy = dialog_manager.dialog_data.get('buy')
+    if buy in ['stars', 'premium']:
+        return {
+            'username': username,
+            'address': False
+        }
+    else:
+        if address:
+            return {
+                'username': False,
+                'address': address
+            }
+        else:
+            return {
+                'username': username,
+                'address': False
+            }
 
 
 async def get_promo(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
@@ -194,15 +273,44 @@ async def get_username(msg: Message, widget: ManagedTextInput, dialog_manager: D
         return
     # проверка пользователя на существование
     dialog_manager.dialog_data['username'] = text
-    await dialog_manager.switch_to(startSG.get_stars_amount)
+    buy = dialog_manager.dialog_data.get('buy')
+    if buy == 'stars':
+        await dialog_manager.switch_to(startSG.get_stars_amount)
+    elif buy == 'premium':
+        status = await check_user_premium(text, 12)
+        if not status:
+            await msg.answer('❗️У данного пользователя уже есть Премиум, пожалуйста попробуйте кого-нибудь еще')
+            return
+        await dialog_manager.switch_to(startSG.get_premium_rate)
+    else:
+        await dialog_manager.switch_to(startSG.get_ton_amount)
+
+
+async def skip_get_username(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
+    username = clb.from_user.username
+    if not username:
+        await clb.message.answer('❗️Чтобы совершать покупки, пожалуйста поставьте на свой аккаунт юзернейм')
+        return
+    dialog_manager.dialog_data['username'] = username
+    buy = dialog_manager.dialog_data.get('buy')
+    if buy == 'stars':
+        await dialog_manager.switch_to(startSG.get_stars_amount)
+    elif buy == 'premium':
+        status = await check_user_premium(username, 12)
+        if not status:
+            await clb.message.answer('❗️У вас уже есть Премиум, пожалуйста попробуйте кого-нибудь еще')
+            return
+        await dialog_manager.switch_to(startSG.get_premium_rate)
+    else:
+        await dialog_manager.switch_to(startSG.get_ton_amount)
 
 
 async def get_ref_amount_switcher(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     user = await session.get_user(clb.from_user.id)
-    #if user.earn < 100:
-        #await clb.answer('❗️Сумма для покупки звезд через партнерские начисления должна быть 100 или более руб.')
-        #return
+    # if user.earn < 100:
+    # await clb.answer('❗️Сумма для покупки звезд через партнерские начисления должна быть 100 или более руб.')
+    # return
     await dialog_manager.switch_to(startSG.get_stars_amount)
 
 
@@ -295,4 +403,3 @@ async def get_derive_amount(msg: Message, widget: ManagedTextInput, dialog_manag
     await msg.answer('✅Заявка на вывод средств была успешно отправлена')
     dialog_manager.dialog_data.clear()
     await dialog_manager.switch_to(startSG.ref_menu)
-

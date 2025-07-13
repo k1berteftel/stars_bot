@@ -44,9 +44,8 @@ class Oxa:
 
 
 @dataclass
-class Wata:
-    card_key: str
-    sbp_key: str
+class FreeKassa:
+    api_key: str
 
 
 @dataclass
@@ -58,7 +57,7 @@ class Config:
     fragment: Fragment
     oxa: Oxa
     p2p: P2P
-    wata: Wata
+    freekassa: FreeKassa
 
 
 def load_config(path: str | None = None) -> Config:
@@ -69,7 +68,7 @@ def load_config(path: str | None = None) -> Config:
         bot=tg_bot(
             token=env('token'),
             admin_ids=list(map(int, env.list('admins')))
-            ),
+        ),
         db=DB(
             dns=env('dns')
         ),
@@ -88,8 +87,7 @@ def load_config(path: str | None = None) -> Config:
         p2p=P2P(
             api_key=env('p2p_api_token')
         ),
-        wata=Wata(
-            card_key=env('wata_card_key'),
-            sbp_key=env('wata_sbp_key')
+        freekassa=FreeKassa(
+            api_key=env('freekassa_api_key')
         )
     )
