@@ -10,10 +10,11 @@ from database.model import (UsersTable, DeeplinksTable, OneTimeLinksIdsTable, Ad
 
 async def setup_database(session: async_sessionmaker):
     async with session() as session:
-        await session.execute(insert(PricesTable).values(
-        ))
-        await session.execute(insert(StaticsTable).values(
-        ))
+        await session.execute(delete(PricesTable))
+        #await session.execute(insert(PricesTable).values(
+        #))
+        #await session.execute(insert(StaticsTable).values(
+        #))
         await session.commit()
 
 
