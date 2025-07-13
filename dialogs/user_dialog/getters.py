@@ -228,7 +228,7 @@ async def get_ton_amount(msg: Message, widget: ManagedTextInput, dialog_manager:
         await msg.delete()
         await msg.answer('❗️Кол-во TON должно быть числом, пожалуйста попробуйте снова')
         return
-    if not (1 < amount < 100):
+    if not (1 <= amount < 100):
         await msg.answer('❗️Кол-во TON должно быть больше 1 и меньше 100')
         return
     dialog_manager.dialog_data['amount'] = amount
