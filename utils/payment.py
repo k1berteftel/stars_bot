@@ -122,7 +122,9 @@ async def get_freekassa_card(user_id: int, amount: int):
                 print(resp.status)
                 return False
             data = await resp.json()
-    print(data)
+    return {
+        'url': data['location'],
+    }
 
 
 async def get_freekassa_sbp(user_id: int, amount: int):
@@ -145,7 +147,9 @@ async def get_freekassa_sbp(user_id: int, amount: int):
                 print(resp.status)
                 return False
             data = await resp.json()
-    print(data)
+    return {
+        'url': data['location'],
+    }
 
 
 async def check_p2p_sbp(order_id: str, id: str):

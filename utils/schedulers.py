@@ -19,8 +19,7 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
     order_id = kwargs.get('order_id')
     crypto_bot = await check_crypto_payment(invoice_id)
     crypto = await check_oxa_payment(track_id)
-    sbp = await check_p2p_sbp(order_id, card_id)
-    if crypto_bot or crypto or sbp:
+    if crypto_bot or crypto:
         username = kwargs.get('username')
         currency = kwargs.get('currency')
         payment = ''
@@ -28,8 +27,7 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
             payment = 'crypto_bot'
         if crypto:
             payment = 'crypto'
-        if sbp:
-            payment = 'sbp'
+
         if buy == 'stars':
             status = await transfer_stars(username, currency)
         elif buy == 'premium':
