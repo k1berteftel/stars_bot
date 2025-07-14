@@ -223,4 +223,4 @@ async def _get_ton_usdt() -> float:
 
 
 
-print(asyncio.run(get_freekassa_sbp(48472347, 100)))
+#print(asyncio.run(get_freekassa_sbp(48472347, 100)))
