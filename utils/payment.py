@@ -22,7 +22,9 @@ crypto_bot = AioCryptoPay(token=config.crypto_bot.token, network=Networks.MAIN_N
 
 
 def _get_signature(data: dict, api_key: str):
-    sorted_data = dict(sorted(data.items()))
+    print('data before', data)
+    sorted_data = dict(sorted(data.items(), key=lambda item: item[0]))
+    print('data after ', sorted_data)
     message = '|'.join(str(v) for v in sorted_data.values())
     print(message)
     signature = hmac.new(
@@ -100,19 +102,18 @@ async def get_p2p_sbp(amount: int):
     }
 
 
-async def get_freekassa_card(amount: int):
+async def get_freekassa_card(user_id: int, amount: int):
     url = 'https://api.fk.life/v1/orders/create'
     data = {
         'shopId': 32219,
         'nonce': int(datetime.datetime.today().timestamp()),
+        'us_userId': str(user_id),
         'i': 36,
         'email': 'Sh.z.a.u.r05@gmail.com',
         'ip': '80.80.116.211',
-        'amount': float(amount),
+        'amount': str(amount) + '.00',
         'currency': 'RUB'
     }
-    print(config.freekassa.api_key)
-    print(_get_signature(data, config.freekassa.api_key))
     data = _get_signature(data, config.freekassa.api_key)
     async with ClientSession() as session:
         async with session.post(url, json=data) as resp:
@@ -123,6 +124,28 @@ async def get_freekassa_card(amount: int):
             data = await resp.json()
     print(data)
 
+
+async def get_freekassa_sbp(user_id: int, amount: int):
+    url = 'https://api.fk.life/v1/orders/create'
+    data = {
+        'shopId': 32219,
+        'nonce': int(datetime.datetime.today().timestamp()),
+        'us_userId': str(user_id),
+        'i': 44,
+        'email': 'Sh.z.a.u.r05@gmail.com',
+        'ip': '80.80.116.211',
+        'amount': str(amount) + '.00',
+        'currency': 'RUB'
+    }
+    data = _get_signature(data, config.freekassa.api_key)
+    async with ClientSession() as session:
+        async with session.post(url, json=data) as resp:
+            if resp.status != 200:
+                print(await resp.json())
+                print(resp.status)
+                return False
+            data = await resp.json()
+    print(data)
 
 
 async def check_p2p_sbp(order_id: str, id: str):
@@ -196,4 +219,4 @@ async def _get_ton_usdt() -> float:
 
 
 
-#print(asyncio.run(_get_usdt_rub()))
+print(asyncio.run(get_freekassa_sbp(48472347, 100)))
