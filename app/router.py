@@ -2,7 +2,7 @@ import datetime
 import json
 
 from aiogram import Bot
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Form
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.build import PostgresBuild
@@ -20,16 +20,13 @@ sessions = database.session()
 
 
 @router.post("/payment")
-async def ping(response: Request):
-    print(response.__dict__)
-    print(await response.json())
-    data = await response.json()
-    user_id = data['us_userId']
+async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str | int = Form(...)):
+    user_id = int(us_userId)
     session = DataInteraction(sessions)
     application = await session.get_last_application(user_id)
     if application.status in [0, 2, 3]:
         return "OK"
-    trans_type = int(data['CUR_ID'])
+    trans_type = int(CUR_ID)
     if application.type == 'stars':
         status = await transfer_stars(application.receiver, application.amount)
     elif application.type == 'premium':
