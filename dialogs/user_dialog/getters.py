@@ -112,15 +112,15 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         sbp_payment = await get_freekassa_sbp(event_from_user.id, amount)  # после фикса заменить
         crypto_payment = await get_crypto_payment_data(usdt)
         oxa_payment = await get_oxa_payment_data(usdt)
-        #card_payment = await get_freekassa_card(event_from_user.id, amount)
+        card_payment = await get_freekassa_card(event_from_user.id, amount)
         dialog_manager.dialog_data['sbp_url'] = sbp_payment.get('url')
         dialog_manager.dialog_data['crypto_url'] = crypto_payment.get('url')
         dialog_manager.dialog_data['oxa_url'] = oxa_payment.get('url')
-        #dialog_manager.dialog_data['card_url'] = card_payment.get('url')
+        dialog_manager.dialog_data['card_url'] = card_payment.get('url')
         crypto_url = crypto_payment.get('url')
         sbp_url = sbp_payment.get('url')
         oxa_url = oxa_payment.get('url')
-        #card_url = card_payment.get('url')
+        card_url = card_payment.get('url')
         application = await session.add_application(event_from_user.id, username, currency, amount, usdt, buy)
         app_id = application.uid_key
         text = text.format(uid_key=app_id)
@@ -155,7 +155,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         'crypto_link': crypto_url,
         'oxa_link': oxa_url,
         'sbp_link': sbp_url,
-        #'card_link': card_url,
+        'card_link': card_url,
     }
 
 
