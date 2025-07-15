@@ -109,7 +109,7 @@ async def get_freekassa_card(user_id: int, amount: int):
         'nonce': int(datetime.datetime.today().timestamp()),
         'us_userId': str(user_id),
         'i': 36,
-        'email': 'Sh.z.a.u.r05@gmail.com',
+        'email': f'{user_id}@stars-bot.ru',
         'ip': '80.80.116.211',
         'amount': str(amount) + '.00',
         'currency': 'RUB'
@@ -134,7 +134,7 @@ async def get_freekassa_sbp(user_id: int, amount: int):
         'nonce': int(datetime.datetime.today().timestamp()),
         'us_userId': str(user_id),
         'i': 44,
-        'email': 'Sh.z.a.u.r05@gmail.com',
+        'email': f'{user_id}@stars-bot.ru',
         'ip': '80.80.116.211',
         'amount': str(amount) + '.00',
         'currency': 'RUB'
