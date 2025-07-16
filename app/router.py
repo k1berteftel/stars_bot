@@ -2,6 +2,8 @@ import datetime
 import json
 
 from aiogram import Bot
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from fastapi import APIRouter, Request, Form
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -38,7 +40,7 @@ async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str 
         payment = 'card'
     if trans_type == 44:
         payment = 'sbp'
-    bot = Bot(token=config.bot.token)
+    bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     if not status:
         await bot.send_message(
             chat_id=user_id,
