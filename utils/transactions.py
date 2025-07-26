@@ -25,10 +25,14 @@ async def transfer_stars(username: str, stars: int) -> bool:
         async with session.post(url, json=data, headers=headers, ssl=False) as resp:
             print(resp.status)
             if resp.status not in [200, 201]:
-                print(await resp.content.read())
-                logging.error(await resp.content.read())
+                content = await resp.content.read()
+                logging.error(content)
+                with open('err_trans.txt', 'a', encoding='utf-8') as f:
+                    f.write(f'**Ошибка транзакции**:\nКонтент: {content}\n')
                 try:
-                    logging.error(await resp.json())
+                    data = await resp.json()
+                    with open('err_trans.txt', 'a', encoding='utf-8') as f:
+                        f.write(f'JSON: {data}\n\n')
                 except Exception:
                     ...
                 return False

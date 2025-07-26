@@ -9,7 +9,6 @@ from aiogram_dialog.widgets.kbd import Button, Select
 from aiogram_dialog.widgets.input import ManagedTextInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from utils.transactions import transfer_stars
 from utils.tables import get_table
 from utils.schedulers import check_payment, stop_check_payment
 from utils.payment import get_crypto_payment_data, get_oxa_payment_data, get_freekassa_sbp, get_freekassa_card
