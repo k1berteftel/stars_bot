@@ -120,7 +120,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         sbp_url = sbp_payment.get('url')
         oxa_url = oxa_payment.get('url')
         card_url = card_payment.get('url')
-        application = await session.add_application(event_from_user.id, username, currency, amount, usdt, buy)
+        application = await session.add_application(event_from_user.id, username, currency, int(amount), usdt, buy)
         app_id = application.uid_key
         text = text.format(uid_key=app_id)
         dialog_manager.dialog_data['app_id'] = app_id
