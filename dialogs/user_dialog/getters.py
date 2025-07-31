@@ -82,7 +82,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     if buy == 'stars':
         currency = dialog_manager.dialog_data.get('amount')
         promo = dialog_manager.dialog_data.get('promo')
-        amount = int(round((currency * 1.21) / (1 - prices.stars_charge / 100)))
+        amount = round((currency * 1.21) / (1 - prices.stars_charge / 100), 2)
         if promo:
             amount = amount - (amount * promo / 100)
         usdt = round(amount / (usdt_rub), 2)
@@ -91,7 +91,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     elif buy == 'premium':
         currency = dialog_manager.dialog_data.get('months')
         usdt = premium_usdt[currency]
-        amount = int(round(usdt * usdt_rub) / (1 - prices.premium_charge / 100))
+        amount = round((usdt * usdt_rub) / (1 - prices.premium_charge / 100), 2)
         usdt = round(amount / (usdt_rub), 2)
         text = (f'<b>Номер заказа</b>: <code>{{uid_key}}</code>\n\n<b>Сумма к оплате</b>: <code>{amount}₽ ({usdt}$)</code>\n'
                 f'<b>Вы покупаете</b>: <code>Premium на {currency} месяца(ев)</code>\n<b>Получатель</b>: <code>{username}</code>\n')
@@ -99,7 +99,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         currency = dialog_manager.dialog_data.get('amount')
         ton_usdt = await _get_ton_usdt()
         usdt = currency * ton_usdt
-        amount = int(round((usdt * usdt_rub) / (1 - prices.ton_charge / 100)))
+        amount = round(((usdt * usdt_rub) / (1 - prices.ton_charge / 100)), 2)
         usdt = round(amount / (usdt_rub), 2)
         text = (f'<b>Номер заказа</b>: <code>{{uid_key}}</code>\n\n<b>Сумма к оплате</b>: <code>{amount}₽ ({usdt}$)</code>\n'
                 f'<b>Вы покупаете</b>: <code>{currency} TON</code>\n<b>Получатель</b>: <code>{username}</code>\n')
