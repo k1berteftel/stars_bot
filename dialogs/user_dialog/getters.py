@@ -85,7 +85,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         amount = round((currency * 1.21) / (1 - prices.stars_charge / 100), 2)
         if promo:
             amount = amount - (amount * promo / 100)
-        usdt = round(amount / (usdt_rub), 2)
+        usdt = round(amount / usdt_rub, 2)
         text = (f'<b>Номер заказа</b>: <code>{{uid_key}}</code>\n\n<b>Сумма к оплате</b>: <code>{amount}₽ ({usdt}$)</code>\n'
                 f'<b>Вы покупаете</b>: <code>{currency} звезд</code>\n<b>Получатель</b>: <code>{username}</code>\n')
     elif buy == 'premium':
