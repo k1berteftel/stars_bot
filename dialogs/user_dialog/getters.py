@@ -108,7 +108,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         text = text.format(uid_key=app_id)
         application = await session.get_application(app_id)
     if not job or not app_id:
-        sbp_payment = await get_freekassa_sbp(event_from_user.id, amount)  # после фикса заменить
+        sbp_payment = await get_freekassa_sbp(event_from_user.id, amount)
         crypto_payment = await get_crypto_payment_data(usdt)
         oxa_payment = await get_oxa_payment_data(usdt)
         card_payment = await get_freekassa_card(event_from_user.id, amount)

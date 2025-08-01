@@ -102,7 +102,7 @@ async def get_p2p_sbp(amount: int):
     }
 
 
-async def get_freekassa_card(user_id: int, amount: int):
+async def get_freekassa_card(user_id: int, amount: float):
     url = 'https://api.fk.life/v1/orders/create'
     data = {
         'shopId': 32219,
@@ -111,7 +111,7 @@ async def get_freekassa_card(user_id: int, amount: int):
         'i': 36,
         'email': f'{user_id}@stars-bot.ru',
         'ip': '80.80.116.211',
-        'amount': str(amount) + '.00',
+        'amount': str(float),
         'currency': 'RUB'
     }
     data = _get_signature(data, config.freekassa.api_key)
@@ -127,7 +127,7 @@ async def get_freekassa_card(user_id: int, amount: int):
     }
 
 
-async def get_freekassa_sbp(user_id: int, amount: int):
+async def get_freekassa_sbp(user_id: int, amount: float):
     url = 'https://api.fk.life/v1/orders/create'
     data = {
         'shopId': 32219,
@@ -136,7 +136,7 @@ async def get_freekassa_sbp(user_id: int, amount: int):
         'i': 44,
         'email': f'{user_id}@stars-bot.ru',
         'ip': '80.80.116.211',
-        'amount': str(amount) + '.00',
+        'amount': str(amount),
         'currency': 'RUB'
     }
     data = _get_signature(data, config.freekassa.api_key)
