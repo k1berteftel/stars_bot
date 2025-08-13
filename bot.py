@@ -19,6 +19,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.router import router
 from storage.nats_storage import NatsStorage
 from utils.nats_connect import connect_to_nats
+from services.start_consumer import start_transfer_consumer
 from database.build import PostgresBuild
 from database.model import Base
 from database.action_data_class import setup_database, DataInteraction
@@ -75,7 +76,7 @@ logger = logging.getLogger(__name__)
 config: Config = load_config()
 
 
-async def run_aiogram():
+async def main():
     database = PostgresBuild(config.db.dns)
     #await database.drop_tables(Base)
     #await database.create_tables(Base)
@@ -111,29 +112,34 @@ async def run_aiogram():
 
     logger.info('Bot start polling')
 
+    app = FastAPI()
+    app.include_router(router)
+    app.state.nc = nc
+    app.state.js = js
+    app.state.session = DataInteraction(session)
+
+    uvicorn_config = uvicorn.Config(app, host='0.0.0.0', port=8000, log_level="info")  # ssl_keyfile='ssl/key.pem', ssl_certfile='ssl/cert.pem'
+    server = uvicorn.Server(uvicorn_config)
+
+    aiogram_task = asyncio.create_task(dp.start_polling(bot, _session=session, _scheduler=scheduler, js=js))
+    uvicorn_task = asyncio.create_task(server.serve())
+    consumer_task = asyncio.create_task(start_transfer_consumer(
+        nc=nc,
+        js=js,
+        scheduler=scheduler,
+        bot=bot,
+        subject=config.consumer.subject,
+        stream=config.consumer.stream,
+        durable_name=config.consumer.durable_name
+    ))
+
     try:
-        await dp.start_polling(bot, _session=session, _scheduler=scheduler)
+        await asyncio.gather(aiogram_task, uvicorn_task, consumer_task)
     except Exception as e:
         logger.exception(e)
     finally:
         await nc.close()
         logger.info('Connection closed')
-
-
-async def run_uvicorn():
-    app = FastAPI()
-    app.include_router(router)
-
-    config = uvicorn.Config(app, host='0.0.0.0', port=8000, log_level="info")  # ssl_keyfile='ssl/key.pem', ssl_certfile='ssl/cert.pem'
-    server = uvicorn.Server(config)
-    await server.serve()
-
-
-async def main():
-    await asyncio.gather(
-        run_uvicorn(),
-        run_aiogram()
-    )
 
 
 if __name__ == "__main__":

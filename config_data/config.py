@@ -24,6 +24,13 @@ class NatsConfig:
 
 
 @dataclass
+class ConsumerConfig:
+    subject: str
+    stream: str
+    durable_name: str
+
+
+@dataclass
 class CryptoBot:
     token: str
 
@@ -53,6 +60,7 @@ class Config:
     bot: tg_bot
     db: DB
     nats: NatsConfig
+    consumer: ConsumerConfig
     crypto_bot: CryptoBot
     fragment: Fragment
     oxa: Oxa
@@ -74,6 +82,11 @@ def load_config(path: str | None = None) -> Config:
         ),
         nats=NatsConfig(
             servers=env.list('nats')
+        ),
+        consumer=ConsumerConfig(
+            subject=env('NATS_CONSUMER_SUBJECT'),
+            stream=env('NATS_CONSUMER_STREAM'),
+            durable_name=env('NATS_CONSUMER_DURABLE_NAME')
         ),
         crypto_bot=CryptoBot(
             token=env('crypto_token')

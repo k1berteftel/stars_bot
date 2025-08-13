@@ -8,7 +8,6 @@ import hashlib
 import hmac
 
 from aiohttp import ClientSession
-from bs4 import BeautifulSoup
 from aiocryptopay import AioCryptoPay, Networks
 
 from utils.build_ids import get_random_id
@@ -109,7 +108,7 @@ async def get_freekassa_card(user_id: int, amount: float):
         'nonce': int(datetime.datetime.today().timestamp()),
         'us_userId': str(user_id),
         'i': 36,
-        'email': f'{user_id}@stars-bot.ru',
+        'email': f'{user_id}@telegram.org',
         'ip': '80.80.116.211',
         'amount': str(amount),
         'currency': 'RUB'
@@ -134,7 +133,7 @@ async def get_freekassa_sbp(user_id: int, amount: float):
         'nonce': int(datetime.datetime.today().timestamp()),
         'us_userId': str(user_id),
         'i': 44,
-        'email': f'{user_id}@stars-bot.ru',
+        'email': f'{user_id}@telegram.org',
         'ip': '80.80.116.211',
         'amount': str(amount),
         'currency': 'RUB'
@@ -222,4 +221,4 @@ async def _get_ton_usdt() -> float:
     return ton
 
 
-#print(asyncio.run(get_freekassa_sbp(48472347, 100)))
+#print(asyncio.run(get_freekassa_sbp(48472347, 10)))

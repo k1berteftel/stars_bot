@@ -9,6 +9,9 @@ from aiogram_dialog.widgets.kbd import Button, Select
 from aiogram_dialog.widgets.input import ManagedTextInput
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from nats.js import JetStreamContext
+
+from services.publisher import send_publisher_data
 from utils.tables import get_table
 from utils.schedulers import check_payment, stop_check_payment
 from utils.payment import get_crypto_payment_data, get_oxa_payment_data, get_freekassa_sbp, get_freekassa_card
@@ -127,10 +130,11 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         job = scheduler.get_job(job_id=f'payment_{event_from_user.id}')
         if job:
             job.remove()
+        js: JetStreamContext = dialog_manager.middleware_data.get('js')
         scheduler.add_job(
             check_payment,
             'interval',
-            args=[bot, event_from_user.id, application.uid_key, session, scheduler, buy],
+            args=[bot, js, event_from_user.id, application.uid_key, session, scheduler, buy],
             kwargs={
                 'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'),
                 'username': username,

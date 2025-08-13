@@ -7,12 +7,18 @@ from aiogram_dialog import DialogManager
 from aiogram.types import InlineKeyboardMarkup, Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from .transactions import transfer_stars, transfer_ton, transfer_premium
-from .payment import check_crypto_payment, check_oxa_payment, check_p2p_sbp
+from nats.js import JetStreamContext
+
+from .payment import check_crypto_payment, check_oxa_payment
+from services.publisher import send_publisher_data
 from database.action_data_class import DataInteraction
+from config_data.config import Config, load_config
 
 
-async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataInteraction, scheduler: AsyncIOScheduler, buy: str, **kwargs):
+config: Config = load_config()
+
+
+async def check_payment(bot: Bot, js: JetStreamContext, user_id: int, app_id: int, session: DataInteraction, scheduler: AsyncIOScheduler, buy: str, **kwargs):
     invoice_id = kwargs.get('invoice_id')
     track_id = kwargs.get('track_id')
     card_id = kwargs.get('card_id')
@@ -27,51 +33,18 @@ async def check_payment(bot: Bot, user_id: int, app_id: int, session: DataIntera
             payment = 'crypto_bot'
         if crypto:
             payment = 'crypto'
-
-        if buy == 'stars':
-            status = await transfer_stars(username, currency)
-        elif buy == 'premium':
-            status = await transfer_premium(username, currency)
-        else:
-            status = await transfer_ton(username, currency)
-        application = await session.get_application(app_id)
-        if not status:
-            try:
-                await bot.send_message(
-                    chat_id=user_id,
-                    text=(f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
-                          f'обратитесь в поддержку(№ заказа: <code>{app_id}</code>)')
-                )
-            except Exception:
-                ...
-            if application.status != 2:
-                await session.update_application(app_id, 3, payment)
-            job = scheduler.get_job(f'payment_{user_id}')
-            if job:
-                job.remove()
-            stop_job = scheduler.get_job(f'stop_payment_{user_id}')
-            if stop_job:
-                stop_job.remove()
-            return
-        try:
-            await bot.send_message(
-                chat_id=user_id,
-                text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
-            )
-        except Exception:
-            ...
-        job = scheduler.get_job(f'payment_{user_id}')
-        if job:
-            job.remove()
-        stop_job = scheduler.get_job(f'stop_payment_{user_id}')
-        if stop_job:
-            stop_job.remove()
-        if application.status != 2:
-            await session.update_application(app_id, 2, payment)
-        await session.add_payment()
-        if buy == 'stars':
-            await session.update_buys(user_id, currency)
-        return
+        transfer_data = {
+            'transfer_type': buy,
+            'username': username,
+            'currency': currency,
+            'payment': payment,
+            'app_id': app_id
+        }
+        await send_publisher_data(
+            js=js,
+            subject=config.consumer.subject,
+            data=transfer_data
+        )
     return
 
 
