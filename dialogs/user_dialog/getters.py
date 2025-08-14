@@ -11,12 +11,11 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from nats.js import JetStreamContext
 
-from services.publisher import send_publisher_data
 from utils.tables import get_table
 from utils.schedulers import check_payment, stop_check_payment
 from utils.payment import get_crypto_payment_data, get_oxa_payment_data, get_freekassa_sbp, get_freekassa_card
 from utils.payment import _get_ton_usdt, _get_usdt_rub
-from utils.transactions import check_user_premium
+from utils.transactions import check_user_premium, get_stars_price
 from database.action_data_class import DataInteraction
 from config_data.config import load_config, Config
 from states.state_groups import startSG
@@ -84,8 +83,9 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     username = dialog_manager.dialog_data.get('username')
     if buy == 'stars':
         currency = dialog_manager.dialog_data.get('amount')
+        usdt = await get_stars_price(currency)
         promo = dialog_manager.dialog_data.get('promo')
-        amount = round((currency * 1.21) / (1 - prices.stars_charge / 100), 2)
+        amount = round((usdt * usdt_rub) / (1 - prices.stars_charge / 100), 2)
         if promo:
             amount = amount - (amount * promo / 100)
         usdt = round(amount / usdt_rub, 2)
@@ -134,7 +134,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         scheduler.add_job(
             check_payment,
             'interval',
-            args=[bot, js, event_from_user.id, application.uid_key, session, scheduler, buy],
+            args=[js, application.uid_key, buy],
             kwargs={
                 'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'),
                 'username': username,
@@ -295,6 +295,10 @@ async def skip_get_username(clb: CallbackQuery, widget: Button, dialog_manager: 
     if not username:
         await clb.message.answer('❗️Чтобы совершать покупки, пожалуйста поставьте на свой аккаунт юзернейм')
         return
+    session: DataInteraction = dialog_manager.middleware_data.get('session')
+    user = await session.get_user(clb.from_user.id)
+    if user.username != username:
+        await session.update_username(clb.from_user.id, username)
     dialog_manager.dialog_data['username'] = username
     buy = dialog_manager.dialog_data.get('buy')
     if buy == 'stars':

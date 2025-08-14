@@ -112,5 +112,6 @@ class StaticsTable(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
     payments: Mapped[int] = mapped_column(BigInteger, default=0)
+    buys: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
 
 

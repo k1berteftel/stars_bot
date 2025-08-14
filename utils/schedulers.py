@@ -18,7 +18,7 @@ from config_data.config import Config, load_config
 config: Config = load_config()
 
 
-async def check_payment(bot: Bot, js: JetStreamContext, user_id: int, app_id: int, session: DataInteraction, scheduler: AsyncIOScheduler, buy: str, **kwargs):
+async def check_payment(js: JetStreamContext, app_id: int, buy: str, **kwargs):
     invoice_id = kwargs.get('invoice_id')
     track_id = kwargs.get('track_id')
     card_id = kwargs.get('card_id')

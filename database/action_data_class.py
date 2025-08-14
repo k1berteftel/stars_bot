@@ -10,10 +10,11 @@ from database.model import (UsersTable, DeeplinksTable, OneTimeLinksIdsTable, Ad
 
 async def setup_database(session: async_sessionmaker):
     async with session() as session:
-        await session.execute(insert(PricesTable).values(
-        ))
-        #await session.execute(insert(StaticsTable).values(
+        #await session.execute(insert(PricesTable).values(
         #))
+        await session.execute(update(StaticsTable).values(
+            buys=0
+        ))
         await session.commit()
 
 
@@ -62,6 +63,13 @@ class DataInteraction():
         async with self._sessions() as session:
             await session.execute(update(StaticsTable).values(
                 payments=StaticsTable.payments + 1
+            ))
+            await session.commit()
+
+    async def add_buys(self, sum: int):
+        async with self._sessions() as session:
+            await session.execute(update(StaticsTable).values(
+                buys=StaticsTable.buys + sum
             ))
             await session.commit()
 
@@ -229,6 +237,13 @@ class DataInteraction():
         async with self._sessions() as session:
             result = await session.scalar(select(PricesTable))
         return result
+
+    async def update_username(self, user_id: int, username: str):
+        async with self._sessions() as session:
+            await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
+                username=username
+            ))
+            await session.commit()
 
     async def update_application(self, uid_key: int, status: int, payment: str | None):
         async with self._sessions() as session:

@@ -11,6 +11,19 @@ from config_data.config import load_config, Config
 config: Config = load_config()
 
 
+async def get_stars_price(amount: int) -> float:
+    url = 'https://tg2.parssms.info/v1/stars/price'
+    headers = {
+        'Content-Type': 'application/json',
+        'api-key': config.fragment.api_key
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers, ssl=False) as resp:
+            data = await resp.json()
+            per_star = data[0]['approx_price_usd'] / 50
+    return round(amount * per_star, 2)
+
+
 async def transfer_stars(username: str, stars: int) -> bool:
     url = "https://tg2.parssms.info/v1/stars/payment"
     data = {
