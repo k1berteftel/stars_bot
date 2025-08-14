@@ -20,7 +20,7 @@ async def get_stars_price(amount: int) -> float:
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, ssl=False) as resp:
             data = await resp.json()
-            per_star = data[0]['approx_price_usd'] / 50
+            per_star = float(data[0]['approx_price_usd'][1::]) / 50
     return round(amount * per_star, 2)
 
 
