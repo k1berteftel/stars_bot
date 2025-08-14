@@ -45,8 +45,11 @@ class TransactionConsumer:
         self.durable_name = durable_name
 
     async def start(self) -> None:
-        #await self.js.delete_stream(name=config.consumer.stream)
-        """
+        try:
+            await self.js.delete_stream(name=config.consumer.stream)
+        except Exception:
+            ...
+        #"""
         stream_config = StreamConfig(
             name=config.consumer.stream,  # Название стрима
             subjects=[
@@ -66,7 +69,7 @@ class TransactionConsumer:
             durable=self.durable_name,
             manual_ack=True
         )
-        """
+        #"""
         logger.info('start TransactionConsumer')
 
     async def on_message(self, message: Msg):
