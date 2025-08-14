@@ -81,16 +81,56 @@ class TransactionConsumer:
         currency = data.get('currency')
         payment = data.get('payment')
         app_id = data.get('app_id')
-        if buy == 'stars':
-            status = await transfer_stars(username, currency)
-        elif buy == 'premium':
-            status = await transfer_premium(username, currency)
-        else:
-            status = await transfer_ton(username, currency)
         session: DataInteraction = DataInteraction(sessions)
         application = await session.get_application(app_id)
         user_id = application.user_id
-        if not status:
+        try:
+            if buy == 'stars':
+                status = await transfer_stars(username, currency)
+            elif buy == 'premium':
+                status = await transfer_premium(username, currency)
+            else:
+                status = await transfer_ton(username, currency)
+            if not status:
+                try:
+                    await self.bot.send_message(
+                        chat_id=user_id,
+                        text=(f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
+                              f'обратитесь в поддержку(№ заказа: <code>{app_id}</code>)')
+                    )
+                except Exception:
+                    ...
+                if application.status != 2:
+                    await session.update_application(app_id, 3, payment)
+                job = self.scheduler.get_job(f'payment_{user_id}')
+                if job:
+                    job.remove()
+                stop_job = self.scheduler.get_job(f'stop_payment_{user_id}')
+                if stop_job:
+                    stop_job.remove()
+                await message.ack()
+                return
+            try:
+                await self.bot.send_message(
+                    chat_id=user_id,
+                    text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
+                )
+            except Exception:
+                ...
+            print(self.scheduler)
+            job = self.scheduler.get_job(f'payment_{user_id}')
+            if job:
+                job.remove()
+            stop_job = self.scheduler.get_job(f'stop_payment_{user_id}')
+            if stop_job:
+                stop_job.remove()
+            if application.status != 2:
+                await session.update_application(app_id, 2, payment)
+            await session.add_payment()
+            if buy == 'stars':
+                await session.update_buys(user_id, currency)
+            #await message.nak(30)
+        except Exception as err:
             try:
                 await self.bot.send_message(
                     chat_id=user_id,
@@ -99,37 +139,8 @@ class TransactionConsumer:
                 )
             except Exception:
                 ...
-            if application.status != 2:
-                await session.update_application(app_id, 3, payment)
-            job = self.scheduler.get_job(f'payment_{user_id}')
-            if job:
-                job.remove()
-            stop_job = self.scheduler.get_job(f'stop_payment_{user_id}')
-            if stop_job:
-                stop_job.remove()
+        finally:
             await message.ack()
-            return
-        try:
-            await self.bot.send_message(
-                chat_id=user_id,
-                text='✅Оплата была успешно совершенна, звезды были отправлены на счет'
-            )
-        except Exception:
-            ...
-        print(self.scheduler)
-        job = self.scheduler.get_job(f'payment_{user_id}')
-        if job:
-            job.remove()
-        stop_job = self.scheduler.get_job(f'stop_payment_{user_id}')
-        if stop_job:
-            stop_job.remove()
-        if application.status != 2:
-            await session.update_application(app_id, 2, payment)
-        await session.add_payment()
-        if buy == 'stars':
-            await session.update_buys(user_id, currency)
-        #await message.nak(30)
-        await message.ack()
 
     async def unsubscribe(self) -> None:
         if self.stream_sub:
