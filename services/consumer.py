@@ -46,7 +46,7 @@ class TransactionConsumer:
 
     async def start(self) -> None:
         #await self.js.delete_stream(name=config.consumer.stream)
-
+        """
         stream_config = StreamConfig(
             name=config.consumer.stream,  # Название стрима
             subjects=[
@@ -66,6 +66,7 @@ class TransactionConsumer:
             durable=self.durable_name,
             manual_ack=True
         )
+        """
         logger.info('start TransactionConsumer')
 
     async def on_message(self, message: Msg):
