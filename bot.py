@@ -116,6 +116,7 @@ async def main():
     app.include_router(router)
     app.state.nc = nc
     app.state.js = js
+    app.state.scheduler = scheduler
     app.state.session = DataInteraction(session)
 
     uvicorn_config = uvicorn.Config(app, host='0.0.0.0', port=8000, log_level="info")  # ssl_keyfile='ssl/key.pem', ssl_certfile='ssl/cert.pem'
