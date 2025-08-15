@@ -134,7 +134,7 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         scheduler.add_job(
             check_payment,
             'interval',
-            args=[js, application.uid_key, buy],
+            args=[js, event_from_user.id, application.uid_key, buy, scheduler],
             kwargs={
                 'invoice_id': crypto_payment.get('id'), 'track_id': oxa_payment.get('id'),
                 'username': username,

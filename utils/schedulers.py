@@ -18,7 +18,7 @@ from config_data.config import Config, load_config
 config: Config = load_config()
 
 
-async def check_payment(js: JetStreamContext, app_id: int, buy: str, **kwargs):
+async def check_payment(js: JetStreamContext, user_id: int, app_id: int, buy: str, scheduler: AsyncIOScheduler, **kwargs):
     invoice_id = kwargs.get('invoice_id')
     track_id = kwargs.get('track_id')
     card_id = kwargs.get('card_id')
@@ -45,6 +45,12 @@ async def check_payment(js: JetStreamContext, app_id: int, buy: str, **kwargs):
             subject=config.consumer.subject,
             data=transfer_data
         )
+        job = scheduler.get_job(f'payment_{user_id}')
+        if job:
+            job.remove()
+        stop_job = scheduler.get_job(f'stop_payment_{user_id}')
+        if stop_job:
+            stop_job.remove()
     return
 
 
