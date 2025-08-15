@@ -5,6 +5,8 @@ import json
 
 from aiogram import Bot
 
+from cachetools import TTLCache
+
 from nats.aio.client import Client
 from nats.aio.msg import Msg
 from nats.js import JetStreamContext
@@ -70,6 +72,10 @@ class TransactionConsumer:
             manual_ack=True
         )
         #"""
+        self.cache = TTLCache(
+            maxsize=1000,
+            ttl=60 * 60 * 3
+        )
         logger.info('start TransactionConsumer')
 
     async def on_message(self, message: Msg):
@@ -81,6 +87,10 @@ class TransactionConsumer:
         currency = data.get('currency')
         payment = data.get('payment')
         app_id = data.get('app_id')
+        if app_id in self.cache.keys():
+            await message.ack()
+            return
+        self.cache[app_id] = True
         session: DataInteraction = DataInteraction(sessions)
         application = await session.get_application(app_id)
         user_id = application.user_id
