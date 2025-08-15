@@ -108,7 +108,6 @@ class TransactionConsumer:
                 stop_job = self.scheduler.get_job(f'stop_payment_{user_id}')
                 if stop_job:
                     stop_job.remove()
-                await message.ack()
                 return
             try:
                 await self.bot.send_message(
