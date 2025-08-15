@@ -24,6 +24,7 @@ router = APIRouter()
 async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str | int = Form(...)):
     user_id = int(us_userId)
     session: DataInteraction = response.app.state.session
+    scheduler: AsyncIOScheduler = response.app.state.scheduler
     js: JetStreamContext = response.app.state.js
     application = await session.get_last_application(user_id)
     if application.status in [0, 2, 3]:
@@ -46,4 +47,10 @@ async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str 
         subject=config.consumer.subject,
         data=data
     )
+    job = scheduler.get_job(f'payment_{user_id}')
+    if job:
+        job.remove()
+    stop_job = scheduler.get_job(f'stop_payment_{user_id}')
+    if stop_job:
+        stop_job.remove()
     return "OK"
