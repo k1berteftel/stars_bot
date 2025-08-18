@@ -309,13 +309,13 @@ async def admin_menu_getter(dialog_manager: DialogManager, **kwargs):
 
 async def get_mail(msg: Message, widget: MessageInput, dialog_manager: DialogManager):
     if msg.text:
-        dialog_manager.dialog_data['text'] = msg.text
+        dialog_manager.dialog_data['text'] = msg.html_text
     elif msg.photo:
         dialog_manager.dialog_data['photo'] = msg.photo[0].file_id
-        dialog_manager.dialog_data['caption'] = msg.caption
+        dialog_manager.dialog_data['caption'] = msg.html_text
     elif msg.video:
         dialog_manager.dialog_data['video'] = msg.video.file_id
-        dialog_manager.dialog_data['caption'] = msg.caption
+        dialog_manager.dialog_data['caption'] = msg.html_text
     else:
         await msg.answer('Что-то пошло не так, пожалуйста попробуйте снова')
     await dialog_manager.switch_to(adminSG.get_time)

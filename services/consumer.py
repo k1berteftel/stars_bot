@@ -102,14 +102,6 @@ class TransactionConsumer:
             else:
                 status = await transfer_ton(username, currency)
             if not status:
-                try:
-                    await self.bot.send_message(
-                        chat_id=user_id,
-                        text=(f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
-                              f'обратитесь в поддержку(№ заказа: <code>{app_id}</code>)')
-                    )
-                except Exception:
-                    ...
                 if application.status != 2:
                     await session.update_application(app_id, 3, payment)
                 job = self.scheduler.get_job(f'payment_{user_id}')
