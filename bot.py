@@ -86,10 +86,17 @@ async def main():
     scheduler: AsyncIOScheduler = AsyncIOScheduler()
     scheduler.start()
 
+    db = DataInteraction(session)
+    with open('user_upload.txt') as file:
+        user = await db.get_user(736791759)
+        user_apps = ''.join([str(app.__dict__) + '\n' for app in await db.get_applications() if app.user_id == user.user_id])
+        file.write(str(user.__dict__) + '\n\n')
+        file.write(user_apps)
+
     scheduler.add_job(
         clean_applications,
         'interval',
-        args=[DataInteraction(session)],
+        args=[db],
         hours=4
     )
 
@@ -117,7 +124,7 @@ async def main():
     app.state.nc = nc
     app.state.js = js
     app.state.scheduler = scheduler
-    app.state.session = DataInteraction(session)
+    app.state.session = db
 
     uvicorn_config = uvicorn.Config(app, host='0.0.0.0', port=8000, log_level="info")  # ssl_keyfile='ssl/key.pem', ssl_certfile='ssl/cert.pem'
     server = uvicorn.Server(uvicorn_config)
