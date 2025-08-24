@@ -85,14 +85,14 @@ async def main():
 
     scheduler: AsyncIOScheduler = AsyncIOScheduler()
     scheduler.start()
-
     db = DataInteraction(session)
+    """
     with open('user_upload.txt', 'a', encoding='utf-8') as file:
         user = await db.get_user(736791759)
         user_apps = ''.join([str(app.__dict__) + '\n' for app in await db.get_applications() if app.user_id == user.user_id])
         file.write(str(user.__dict__) + '\n\n')
         file.write(user_apps)
-
+    """
     scheduler.add_job(
         clean_applications,
         'interval',
