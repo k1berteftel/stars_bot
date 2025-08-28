@@ -91,7 +91,7 @@ async def main():
     buyers = []
     for user in users:
         if user.buys:
-            buyers.append(user.username)
+            buyers.append('@' + user.username + '\n')
     with open('buyers', 'a', encoding='utf-8') as file:
         file.writelines(buyers)
     #"""
