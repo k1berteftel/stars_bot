@@ -3,8 +3,6 @@ import aiohttp
 import json
 import logging
 
-from ton_fragment.helpers import scraper
-
 from config_data.config import load_config, Config
 
 

@@ -12,9 +12,9 @@ async def setup_database(session: async_sessionmaker):
     async with session() as session:
         #await session.execute(insert(PricesTable).values(
         #))
-        await session.execute(update(StaticsTable).values(
-            buys=0
-        ))
+        #await session.execute(update(StaticsTable).values(
+            #buys=0
+        #))
         await session.commit()
 
 
