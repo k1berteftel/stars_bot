@@ -4,7 +4,7 @@ import json
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Request, Form, HTTPException, status
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from nats.js import JetStreamContext
@@ -20,8 +20,23 @@ config: Config = load_config()
 router = APIRouter()
 
 
+ALLOWED_IPS: list[str] = [
+    "168.119.157.136",
+    "168.119.60.227",
+    "178.154.197.79",
+    "51.250.54.238"
+]
+
+
 @router.post("/payment")
 async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str | int = Form(...)):
+    client_ip = response.client.host
+
+    if client_ip not in ALLOWED_IPS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"IP {client_ip} is not allowed"
+        )
     user_id = int(us_userId)
     session: DataInteraction = response.app.state.session
     scheduler: AsyncIOScheduler = response.app.state.scheduler

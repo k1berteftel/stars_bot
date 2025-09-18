@@ -172,6 +172,11 @@ class DataInteraction():
             result = await session.scalar(select(ApplicationsTable).where(ApplicationsTable.uid_key == uid_key))
         return result
 
+    async def get_receiver_applications(self, receiver: str):
+        async with self._sessions() as session:
+            result = await session.scalars(select(ApplicationsTable).where(ApplicationsTable.receiver == receiver))
+        return result.fetchall()
+
     async def get_last_application(self, user_id: int):
         async with self._sessions() as session:
             result = await session.scalar(select(ApplicationsTable).where(ApplicationsTable.user_id == user_id)

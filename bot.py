@@ -87,13 +87,11 @@ async def main():
     scheduler.start()
     db = DataInteraction(session)
     #"""
-    users = await db.get_users()
-    buyers = []
-    for user in users:
-        if user.buys:
-            buyers.append('@' + user.username + '\n')
-    with open('buyers', 'a', encoding='utf-8') as file:
-        file.writelines(buyers)
+    apps = await db.get_receiver_applications('skytr1ed')
+    applications = [f'{app.__dict__}\n' for app in apps]
+    with open('user_apps.txt', 'a+', encoding='utf-8') as file:
+        file.writelines(applications)
+    return
     #"""
     scheduler.add_job(
         clean_applications,
