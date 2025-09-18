@@ -31,7 +31,6 @@ ALLOWED_IPS: list[str] = [
 @router.post("/payment")
 async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str | int = Form(...)):
     client_ip = response.client.host
-
     if client_ip not in ALLOWED_IPS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
