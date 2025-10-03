@@ -1,5 +1,6 @@
 import os
 import datetime
+from cachetools import TTLCache
 
 from aiogram import Bot
 from aiogram.enums.chat_action import ChatAction
@@ -50,6 +51,27 @@ async def get_static(clb: CallbackQuery, widget: Button, dialog_manager: DialogM
             f'<b>Прирост аудитории:</b>\n - За сегодня: +{entry.get("today")}\n - Вчера: +{entry.get("yesterday")}'
             f'\n - Позавчера: + {entry.get("2_day_ago")}')
     await clb.message.answer(text=text)
+
+
+async def get_block_user(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
+    session: DataInteraction = dialog_manager.middleware_data.get('session')
+    try:
+        user_id = int(text)
+        user = await session.get_user(user_id)
+    except Exception:
+        if not text.startswith('@'):
+            await msg.answer('Юзернейм должен начинаться с @ , пожалуйста попробуйте снова')
+            return
+        user = await session.get_user_by_username(text[1::])
+    if not user:
+        await msg.answer('Такого пользователя в боте не найденнно, попробуйте еще раз')
+        return
+    await session.add_block(user.user_id)
+    await msg.answer('Пользователь был успешно добавлен в черный список')
+    cache: TTLCache = dialog_manager.middleware_data.get('cache')
+    users = await session.get_block_users()
+    cache['users'] = [user.id for user in users]
+    await dialog_manager.switch_to(adminSG.admin_menu)
 
 
 async def get_users_txt(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):

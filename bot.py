@@ -6,6 +6,7 @@ import inspect
 import pytz
 import datetime
 import traceback
+from cachetools import TTLCache
 
 import uvicorn
 
@@ -79,7 +80,7 @@ config: Config = load_config()
 async def main():
     database = PostgresBuild(config.db.dns)
     #await database.drop_tables(Base)
-    #await database.create_tables(Base)
+    await database.create_tables(Base)
     session = database.session()
     #await setup_database(session)
 
@@ -106,6 +107,11 @@ async def main():
     bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=storage)
 
+    cache =  TTLCache(
+        maxsize=1000,
+        ttl=60 * 60 * 3
+    )
+
     # подключаем роутеры
     dp.include_routers(user_router, *get_dialogs())
 
@@ -129,7 +135,7 @@ async def main():
     uvicorn_config = uvicorn.Config(app, host='0.0.0.0', port=8000, log_level="info")  # ssl_keyfile='ssl/key.pem', ssl_certfile='ssl/cert.pem'
     server = uvicorn.Server(uvicorn_config)
 
-    aiogram_task = asyncio.create_task(dp.start_polling(bot, _session=session, _scheduler=scheduler, js=js))
+    aiogram_task = asyncio.create_task(dp.start_polling(bot, _session=session, _scheduler=scheduler, js=js, cache=cache))
     uvicorn_task = asyncio.create_task(server.serve())
     consumer_task = asyncio.create_task(start_transfer_consumer(
         nc=nc,

@@ -5,7 +5,7 @@ from sqlalchemy import select, insert, update, column, text, delete, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from database.model import (UsersTable, DeeplinksTable, OneTimeLinksIdsTable, AdminsTable, PromosTable,
-                            UserPromoTable, PricesTable, ApplicationsTable, StaticsTable)
+                            UserPromoTable, PricesTable, ApplicationsTable, StaticsTable, BlockUsersTable)
 
 
 async def setup_database(session: async_sessionmaker):
@@ -56,6 +56,13 @@ class DataInteraction():
                 referral=referral,
                 sub_referral=sub_referral,
                 entry=datetime.datetime.now()
+            ))
+            await session.commit()
+
+    async def add_block(self, user_id: int):
+        async with self._sessions() as session:
+            await session.execute(insert(BlockUsersTable).values(
+                user_id=user_id
             ))
             await session.commit()
 
@@ -162,6 +169,11 @@ class DataInteraction():
             ))
             await session.commit()
 
+    async def get_block_users(self):
+        async with self._sessions() as session:
+            result = await session.scalars(select(BlockUsersTable))
+        return result.fetchall()
+
     async def get_applications(self):
         async with self._sessions() as session:
             result = await session.scalars(select(ApplicationsTable).order_by(ApplicationsTable.uid_key))
@@ -221,6 +233,11 @@ class DataInteraction():
     async def get_user(self, user_id: int):
         async with self._sessions() as session:
             result = await session.scalar(select(UsersTable).where(UsersTable.user_id == user_id))
+        return result
+
+    async def get_user_by_username(self, username: str):
+        async with self._sessions() as session:
+            result = await session.scalar(select(UsersTable).where(UsersTable.username == username))
         return result
 
     async def get_links(self):
@@ -297,6 +314,11 @@ class DataInteraction():
             await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
                 active=active
             ))
+            await session.commit()
+
+    async def del_block_user(self, user_id: int):
+        async with self._sessions() as session:
+            await session.execute(delete(BlockUsersTable).where(BlockUsersTable.user_id == user_id))
             await session.commit()
 
     async def del_deeplink(self, link: str):

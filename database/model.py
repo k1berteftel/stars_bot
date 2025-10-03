@@ -29,6 +29,14 @@ class UsersTable(Base):
     buys: Mapped[int] = mapped_column(Integer, default=0, nullable=True)
 
 
+class BlockUsersTable(Base):
+    __tablename__ = 'block-users'
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+
+    user_id: Mapped[int] = mapped_column(BigInteger)
+
+
 class DeeplinksTable(Base):
     __tablename__ = 'deeplinks'
 

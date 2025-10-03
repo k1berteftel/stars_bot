@@ -118,7 +118,7 @@ class TransactionConsumer:
                 )
             except Exception:
                 ...
-            print(self.scheduler)
+            #print(self.scheduler)
             job = self.scheduler.get_job(f'payment_{user_id}')
             if job:
                 job.remove()

@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Awaitable, Callable, Dict
+from cachetools import TTLCache
 
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, User
@@ -26,6 +27,15 @@ class TransferObjectsMiddleware(BaseMiddleware):
 
         sessions: async_sessionmaker = data.get('_session')
         scheduler: AsyncIOScheduler = data.get('_scheduler')
+
+        cache: TTLCache = data.get('cache')
+        users = cache.get('users')
+        if not users:
+            db = DataInteraction(sessions)
+            users = [user.id for user in await db.get_block_users()]
+            cache['users'] = users
+        if user.id in users:
+            return
 
         interaction = DataInteraction(sessions)
         data['session'] = interaction

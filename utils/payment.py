@@ -101,12 +101,13 @@ async def get_p2p_sbp(amount: int):
     }
 
 
-async def get_freekassa_card(user_id: int, amount: float):
+async def get_freekassa_card(user_id: int, amount: float, app_id: int):
     url = 'https://api.fk.life/v1/orders/create'
     data = {
         'shopId': 32219,
         'nonce': int(datetime.datetime.today().timestamp()),
         'us_userId': str(user_id),
+        'us_appId': str(app_id),
         'i': 36,
         'email': f'{user_id}@telegram.org',
         'ip': '80.80.116.211',
@@ -126,12 +127,13 @@ async def get_freekassa_card(user_id: int, amount: float):
     }
 
 
-async def get_freekassa_sbp(user_id: int, amount: float):
+async def get_freekassa_sbp(user_id: int, amount: float, app_id: int):
     url = 'https://api.fk.life/v1/orders/create'
     data = {
         'shopId': 32219,
         'nonce': int(datetime.datetime.today().timestamp()),
         'us_userId': str(user_id),
+        'us_appId': str(app_id),
         'i': 44,
         'email': f'{user_id}@telegram.org',
         'ip': '80.80.116.211',

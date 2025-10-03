@@ -21,21 +21,29 @@ class startSG(StatesGroup):
 
 class adminSG(StatesGroup):
     start = State()
+
+    get_block_user = State()
+
     get_mail = State()
     get_time = State()
     get_keyboard = State()
     confirm_mail = State()
+
     deeplink_menu = State()
     deeplink_del = State()
+
     admin_menu = State()
     admin_del = State()
     admin_add = State()
+
     promos_menu = State()
     del_promo = State()
     get_promo = State()
     get_limit = State()
     get_percent = State()
+
     charge_menu = State()
     get_charge = State()
-    get_app_uid = State()
+
     application_menu = State()
+    get_app_uid = State()

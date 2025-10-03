@@ -111,10 +111,14 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         text = text.format(uid_key=app_id)
         application = await session.get_application(app_id)
     if not job or not app_id:
-        sbp_payment = await get_freekassa_sbp(event_from_user.id, amount)
+        application = await session.add_application(event_from_user.id, username, currency, int(amount), usdt, buy)
+        app_id = application.uid_key
+        text = text.format(uid_key=app_id)
+        dialog_manager.dialog_data['app_id'] = app_id
+        sbp_payment = await get_freekassa_sbp(event_from_user.id, amount, app_id)
         crypto_payment = await get_crypto_payment_data(usdt)
         oxa_payment = await get_oxa_payment_data(usdt)
-        card_payment = await get_freekassa_card(event_from_user.id, amount)
+        card_payment = await get_freekassa_card(event_from_user.id, amount, app_id)
         dialog_manager.dialog_data['sbp_url'] = sbp_payment.get('url')
         dialog_manager.dialog_data['crypto_url'] = crypto_payment.get('url')
         dialog_manager.dialog_data['oxa_url'] = oxa_payment.get('url')
@@ -123,10 +127,6 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
         sbp_url = sbp_payment.get('url')
         oxa_url = oxa_payment.get('url')
         card_url = card_payment.get('url')
-        application = await session.add_application(event_from_user.id, username, currency, int(amount), usdt, buy)
-        app_id = application.uid_key
-        text = text.format(uid_key=app_id)
-        dialog_manager.dialog_data['app_id'] = app_id
         job = scheduler.get_job(job_id=f'payment_{event_from_user.id}')
         if job:
             job.remove()

@@ -15,6 +15,7 @@ admin_dialog = Dialog(
         Column(
             Button(Const('📊 Получить статистику'), id='get_static', on_click=getters.get_static),
             SwitchTo(Const('🛫Сделать рассылку'), id='mailing_menu_switcher', state=adminSG.get_mail),
+            SwitchTo(Const('Блокировка пользователей'), id='get_block_user', state=adminSG.get_block_user),
             SwitchTo(Const('Найти заказ'), id='get_app_uid_switcher', state=adminSG.get_app_uid),
             SwitchTo(Const('🔗 Управление диплинками'), id='deeplinks_menu_switcher', state=adminSG.deeplink_menu),
             SwitchTo(Const('Управление промокодами'), id='promos_menu_switcher', state=adminSG.promos_menu),
@@ -27,6 +28,14 @@ admin_dialog = Dialog(
         ),
         Cancel(Const('Назад'), id='close_admin'),
         state=adminSG.start
+    ),
+    Window(
+        Const('Введите user_id или @username пользователя, которого надо заблокировать'),
+        TextInput(
+            id='get_block_user',
+            on_success=getters.get_block_user
+        ),
+        state=adminSG.get_block_user
     ),
     Window(
         Const('Введите номер заказа'),

@@ -29,7 +29,8 @@ ALLOWED_IPS: list[str] = [
 
 
 @router.post("/payment")
-async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str | int = Form(...)):
+async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str | int = Form(...),
+               us_appId: str | int = Form(...)):
     client_ip = response.client.host
     if client_ip not in ALLOWED_IPS:
         raise HTTPException(
@@ -40,7 +41,7 @@ async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str 
     session: DataInteraction = response.app.state.session
     scheduler: AsyncIOScheduler = response.app.state.scheduler
     js: JetStreamContext = response.app.state.js
-    application = await session.get_last_application(user_id)
+    application = await session.get_application(int(us_appId))
     if application.status in [0, 2, 3]:
         return "OK"
     trans_type = int(CUR_ID)
