@@ -22,7 +22,8 @@ user_dialog = Dialog(
             SwitchTo(Const('👤Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu),
             SwitchTo(Const('📋Правила'), id='rules_menu_switcher', state=startSG.rules_menu),
             Url(Const('📩Поддержка'), id='support_url', url=Const('https://t.me/TrustStarsHelp')),
-            Start(Const('Админ панель'), id='admin', state=adminSG.start, when='admin')
+            Start(Const('Админ панель'), id='admin', state=adminSG.start, when='admin'),
+            Url(Const('🏦Франшиза'), id='partner_url', url=Const('https://t.me/TrustPartnersBot')),
         ),
         getter=getters.start_getter,
         state=startSG.start
@@ -128,7 +129,7 @@ user_dialog = Dialog(
         state=startSG.rules_menu
     ),
     Window(
-        Const('Введите сумму для вывода <em>(в рублях)</em>'),
+        Const('Введите сумму для вывода <em>(в ⭐️)</em>'),
         TextInput(
             id='get_derive_amount',
             on_success=getters.get_derive_amount
