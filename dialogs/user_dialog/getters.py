@@ -36,10 +36,11 @@ async def start_getter(event_from_user: User, dialog_manager: DialogManager, **k
     admins.extend(config.bot.admin_ids)
     if event_from_user.id in admins:
         admin = True
-    media = MediaId(file_id='AgACAgIAAxkBAAIBQGgaN21XHo8C0ui8X_vXVD_1dp9BAAJg8DEb9dvQSFW59oxus4LOAQADAgADeAADNgQ')
-    media = MediaAttachment(type=ContentType.PHOTO, file_id=media)
-    return {'admin': admin,
-            'media': media}
+    media = MediaAttachment(type=ContentType.PHOTO, path='medias/menu.png')
+    return {
+        'admin': admin,
+        'media': media
+    }
 
 
 async def rules_menu_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
