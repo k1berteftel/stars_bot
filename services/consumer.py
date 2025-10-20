@@ -45,6 +45,7 @@ class TransactionConsumer:
         self.subject = subject
         self.stream = stream
         self.durable_name = durable_name
+        self.counter: dict[int, int] = {}
 
     async def start(self) -> None:
         try:
@@ -130,14 +131,21 @@ class TransactionConsumer:
             await session.add_payment()
             if buy == 'stars':
                 await session.update_buys(user_id, currency)
-            #await message.nak(30)
         except Exception as err:
             try:
-                await self.bot.send_message(
-                    chat_id=user_id,
-                    text=(f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
-                          f'обратитесь в поддержку(№ заказа: <code>{app_id}</code>)')
-                )
+                if self.counter.get(user_id) and self.counter.get(user_id) > 3:
+                    del self.counter[user_id]
+                    await self.bot.send_message(
+                        chat_id=user_id,
+                        text=(f'🚨Во время начисления звезд что-то пошло не так, пожалуйста '
+                              f'обратитесь в поддержку(№ заказа: <code>{app_id}</code>)')
+                    )
+                    return
+                if self.counter.get(user_id):
+                    self.counter[user_id] += 1
+                else:
+                    self.counter[user_id] = 1
+                await message.nak(15)
             except Exception:
                 ...
         finally:
