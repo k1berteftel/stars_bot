@@ -88,7 +88,7 @@ async def main():
     scheduler.start()
     db = DataInteraction(session)
 
-    #"""
+    """
     users = [await db.get_user(6243232961), await db.get_user(826408622)]
     apps = [*await db.get_user_applications(6243232961), *await db.get_user_applications(826408622)]
     applications = [f'{app.__dict__}\n' for app in apps]
@@ -97,7 +97,7 @@ async def main():
         file.write('\n\n\n')
         file.writelines(applications)
     return
-    #"""
+    """
 
     scheduler.add_job(
         clean_applications,
