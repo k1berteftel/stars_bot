@@ -195,6 +195,11 @@ class DataInteraction():
                                           .order_by(ApplicationsTable.create.desc()))
         return result
 
+    async def get_user_applications(self, user_id: int):
+        async with self._sessions() as session:
+            result = await session.scalars(select(ApplicationsTable).where(ApplicationsTable.user_id == user_id))
+        return result.fetchall()
+
     async def get_promos(self):
         async with self._sessions() as session:
             result = await session.scalars(select(PromosTable))
