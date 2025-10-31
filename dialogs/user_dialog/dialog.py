@@ -23,7 +23,7 @@ user_dialog = Dialog(
             SwitchTo(Const('📋Правила'), id='rules_menu_switcher', state=startSG.rules_menu),
             Url(Const('📩Поддержка'), id='support_url', url=Const('https://t.me/TrustStarsHelp')),
             Start(Const('Админ панель'), id='admin', state=adminSG.start, when='admin'),
-            Url(Const('🏦Франшиза'), id='partner_url', url=Const('https://t.me/TrustPartnersBot')),
+            Url(Const('🤖Создать своего бота'), id='partner_url', url=Const('https://t.me/TrustPartnersBot')),
         ),
         getter=getters.start_getter,
         state=startSG.start
