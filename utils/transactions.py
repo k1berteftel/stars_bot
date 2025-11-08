@@ -10,7 +10,7 @@ config: Config = load_config()
 
 
 async def get_stars_price(amount: int) -> float:
-    url = 'https://tg2.parssms.info/v1/stars/price'
+    url = 'https://tg.parssms.info/v1/stars/price'
     headers = {
         'Content-Type': 'application/json',
         'api-key': config.fragment.api_key
@@ -23,7 +23,7 @@ async def get_stars_price(amount: int) -> float:
 
 
 async def transfer_stars(username: str, stars: int) -> bool:
-    url = "https://tg2.parssms.info/v1/stars/payment"
+    url = "https://tg.parssms.info/v1/stars/payment"
     data = {
         "query": username,
         "quantity": str(stars)
@@ -140,7 +140,6 @@ async def check_user_premium(username: str, months: int):
                 return False
             print(data)
     return True
-
 
 
 #print(asyncio.run(transfer_stars('farion', 50)))
