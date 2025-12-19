@@ -88,13 +88,13 @@ async def main():
     scheduler.start()
     db = DataInteraction(session)
 
-    #""""
+    """"
     apps = await db.get_user_applications(6866700194)
     applications = [f'{app.__dict__}\n' for app in apps]
     with open('user_apps.txt', 'a+', encoding='utf-8') as file:
         file.writelines(applications)
     return
-    #"""
+    """
 
     scheduler.add_job(
         clean_applications,
