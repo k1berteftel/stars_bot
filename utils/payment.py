@@ -61,6 +61,8 @@ async def get_oxa_payment_data(amount: int | float):
         'id': data['data']['track_id']
     }
 
+#print(asyncio.run(get_oxa_payment_data(11.11)))
+
 
 async def get_crypto_payment_data(amount: int | float):
     invoice = await crypto_bot.create_invoice(asset='USDT', amount=amount)
