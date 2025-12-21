@@ -15,7 +15,7 @@ user_dialog = Dialog(
               'Здесь можно приобрести Премиум и Telegram звезды без верификации KYC и дешевле чем в приложении.'),
         Button(Const('⭐️Купить звезды'), id='stars_choose', on_click=getters.buy_choose),
         Row(
-            #Button(Const('🪙TON'), id='ton_choose', on_click=getters.buy_choose),
+            Button(Const('🪙TON'), id='ton_choose', on_click=getters.buy_choose),
             Button(Const('👑Премиум'), id='premium_choose', on_click=getters.buy_choose)
         ),
         Column(
