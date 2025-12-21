@@ -36,7 +36,7 @@ async def start_getter(event_from_user: User, dialog_manager: DialogManager, **k
     admins.extend(config.bot.admin_ids)
     if event_from_user.id in admins:
         admin = True
-    media = MediaAttachment(type=ContentType.PHOTO, path='medias/menu.png')
+    media = MediaAttachment(type=ContentType.PHOTO, path='medias/new_menu.png')
     return {
         'admin': admin,
         'media': media
