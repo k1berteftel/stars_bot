@@ -89,7 +89,7 @@ async def main():
     db = DataInteraction(session)
 
     #"""
-    apps = await db.get_user_applications(7765682062)
+    apps = await db.get_user_applications(1914568680)
     applications = [f'{app.__dict__}\n' for app in apps]
     with open('user_apps.txt', 'a+', encoding='utf-8') as file:
         file.writelines(applications)
