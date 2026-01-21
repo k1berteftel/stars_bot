@@ -5,6 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 class startSG(StatesGroup):
     start = State()
+
     rules_menu = State()
     get_username = State()
     ton_receipt_menu = State()
@@ -13,10 +14,14 @@ class startSG(StatesGroup):
     get_promo = State()
     get_premium_rate = State()
     get_ton_amount = State()
+
     payment_menu = State()
+
     ref_menu = State()
     get_derive_amount = State()
     get_card = State()
+
+    profile = State()
 
 
 class adminSG(StatesGroup):

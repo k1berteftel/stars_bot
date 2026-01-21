@@ -18,14 +18,17 @@ class UsersTable(Base):
     username: Mapped[str] = mapped_column(VARCHAR)
     name: Mapped[str] = mapped_column(VARCHAR)
     user_id: Mapped[int] = mapped_column(BigInteger, unique=True)
+
     referral: Mapped[int] = mapped_column(BigInteger, default=None, nullable=True)
     refs: Mapped[int] = mapped_column(Integer, default=0)
     sub_referral: Mapped[int] = mapped_column(BigInteger, default=None, nullable=True)
     sub_refs: Mapped[int] = mapped_column(Integer, default=0, nullable=True)
     earn: Mapped[int] = mapped_column(Integer, default=0)
+
     active: Mapped[int] = mapped_column(Integer, default=1)
     activity: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
     entry: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
+
     buys: Mapped[int] = mapped_column(Integer, default=0, nullable=True)
 
 

@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from aiogram import Bot
@@ -11,6 +12,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from nats.js import JetStreamContext
 
+from services.publisher import send_publisher_data
 from utils.tables import get_table
 from utils.schedulers import check_payment, stop_check_payment
 from utils.payment import get_crypto_payment_data, get_oxa_payment_data, get_freekassa_sbp, get_freekassa_card
@@ -34,10 +36,18 @@ async def start_getter(event_from_user: User, dialog_manager: DialogManager, **k
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     admins = [user.user_id for user in await session.get_admins()]
     admins.extend(config.bot.admin_ids)
+    static = await session.get_statistics()
+    try:
+        usdt = await get_stars_price(static.buys)
+    except Exception:
+        usdt = round(static.buys * 0.0175, 2)
+
     if event_from_user.id in admins:
         admin = True
     media = MediaAttachment(type=ContentType.PHOTO, path='medias/new_menu.jpg')
     return {
+        'stars': static.buys,
+        'usdt': usdt,
         'admin': admin,
         'media': media
     }
@@ -179,6 +189,61 @@ async def close_payment(clb: CallbackQuery, widget: Button, dialog_manager: Dial
     except Exception:
         ...
     await dialog_manager.start(startSG.start, mode=StartMode.RESET_STACK)
+
+
+async def from_balance_buy(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
+    session: DataInteraction = dialog_manager.middleware_data.get('session')
+    scheduler: AsyncIOScheduler = dialog_manager.middleware_data.get('scheduler')
+    js: JetStreamContext = dialog_manager.middleware_data.get('js')
+    buy = dialog_manager.dialog_data.get('buy')
+    user = await session.get_user(clb.from_user.id)
+    prices = await session.get_prices()
+    usdt_rub = await _get_usdt_rub()
+    if buy == 'stars':
+        currency = dialog_manager.dialog_data.get('amount')
+        usdt = await get_stars_price(currency)
+        promo = dialog_manager.dialog_data.get('promo')
+        amount = round((usdt * usdt_rub) / (1 - prices.stars_charge / 100), 2)
+        if promo:
+            amount = amount - (amount * promo / 100)
+        usdt = round(amount / usdt_rub, 2)
+    elif buy == 'premium':
+        currency = dialog_manager.dialog_data.get('months')
+        usdt = premium_usdt[currency]
+        amount = round((usdt * usdt_rub) / (1 - prices.premium_charge / 100), 2)
+        usdt = round(amount / (usdt_rub), 2)
+    else:
+        currency = dialog_manager.dialog_data.get('amount')
+        ton_usdt = await _get_ton_usdt()
+        usdt = currency * ton_usdt
+        amount = round(((usdt * usdt_rub) / (1 - prices.ton_charge / 100)), 2)
+        usdt = round(amount / (usdt_rub), 2)
+    if user.earn < amount:
+        await clb.answer('❗️На вашем партнерском балансе недостаточно средств для оплаты покупки, чтобы пополнить '
+                         'реферальный баланс приглашайте друзей в бота по вашей реферальной ссылке.\n'
+                         'Подробнее в меню "Партнерская программа"')
+        return
+    app_id = dialog_manager.dialog_data.get('app_id')
+    username = dialog_manager.dialog_data.get('username')
+    transfer_data = {
+        'transfer_type': buy,
+        'username': username,
+        'currency': currency,
+        'payment': 'referral',
+        'app_id': app_id
+    }
+    await send_publisher_data(
+        js=js,
+        subject=config.consumer.subject,
+        data=transfer_data
+    )
+    job = scheduler.get_job(f'payment_{clb.from_user.id}')
+    if job:
+        job.remove()
+    stop_job = scheduler.get_job(f'stop_payment_{clb.from_user.id}')
+    if stop_job:
+        stop_job.remove()
+    await session.update_earn(clb.from_user.id, -int(amount))
 
 
 async def buy_choose(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
@@ -326,10 +391,11 @@ async def get_ref_amount_switcher(clb: CallbackQuery, widget: Button, dialog_man
 async def ref_menu_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     user = await session.get_user(event_from_user.id)
-    text = (f'<b>👥 Партнерская программа</b>\n\nПриглашайте людей и получайте по 3⭐️ за '
-            f'каждого приглашенного\n\n'
+    text = (f'<b>👥 Партнерская программа</b>\n\nПриглашайте людей и получайте по 15% от их навсегда\n\n'
             f'<b>Ваша партнерская ссылка:\n</b>t.me/TrustStarsBot?start={event_from_user.id}\n\n<b>Статистика вашей партнерки:</b>'
-            f'\n\t- Рефералов: {user.refs}\n\t- Баланс: {user.earn} ⭐️\n\n<b>Минимальная сумма выплаты - 100 ⭐️</b>')
+            f'\n\t- Рефералов: {user.refs}\n\t- Баланс: {user.earn} ₽\n\n<b>С данного баланса вы можете приобретать '
+            f'продаваемую нами продукцию или же просто вывести заработанные средства себе на карту. '
+            f'Минимальная сумма выплаты - 100 ₽</b>')
     return {
         'text': text,
         'url': f'http://t.me/share/url?url=https://t.me/TrustStarsBot?start={event_from_user.id}'
@@ -340,7 +406,7 @@ async def get_derive_amount_switcher(clb: CallbackQuery, widget: Button, dialog_
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     user = await session.get_user(clb.from_user.id)
     if user.earn < 100:
-        await clb.answer('❗️Сумма для вывода 100 звезд или более .')
+        await clb.answer('❗️Сумма для вывода от 100 ₽ или более .')
         return
     await dialog_manager.switch_to(startSG.get_derive_amount)
 
@@ -352,7 +418,7 @@ async def get_derive_amount(msg: Message, widget: ManagedTextInput, dialog_manag
         await msg.delete()
         await msg.answer('❗️Сумма для вывода должна быть числом, пожалуйста попробуйте снова')
         return
-    if amount < 50:
+    if amount < 100:
         await msg.answer('❗️Сумма для вывода не может быть меньше 50')
         return
     session: DataInteraction = dialog_manager.middleware_data.get('session')
@@ -362,7 +428,8 @@ async def get_derive_amount(msg: Message, widget: ManagedTextInput, dialog_manag
         return
     username = msg.from_user.username
     if not username:
-        await msg.answer(text='❗️Чтобы получить звезды, пожалуйста поставьте на свой аккаунт юзернейм')
+        await msg.answer(text='❗️Чтобы с вами могли связаться для выплаты, '
+                              'пожалуйста поставьте на свой аккаунт юзернейм')
         return
     ref_users = await session.get_ref_users(msg.from_user.id)
     users = []
@@ -395,7 +462,7 @@ async def get_derive_amount(msg: Message, widget: ManagedTextInput, dialog_manag
     text = (f'<b>Заявка на вывод средств</b>\n\nДанные о пользователе:\n'
             f'- Никнейм: {msg_user.name}\n - Username: @{msg_user.username}'
             f'\n - Telegram Id: {msg.from_user.id}\n - Рефералы: {msg_user.refs}\n - Рефералы 2: {msg_user.sub_refs}'
-            f'\n - Общий баланс: {msg_user.earn}⭐️\n - <b>Сумма для вывода</b>: {amount}⭐️')
+            f'\n - Общий баланс: {msg_user.earn} ️₽\n - <b>Сумма для вывода</b>: {amount} ₽')
     builder = MediaGroupBuilder(caption=text)
     builder.add_document(FSInputFile(path=table_1))
     builder.add_document(FSInputFile(path=table_2))
@@ -412,3 +479,13 @@ async def get_derive_amount(msg: Message, widget: ManagedTextInput, dialog_manag
     await msg.answer('✅Заявка на вывод средств была успешно отправлена')
     dialog_manager.dialog_data.clear()
     await dialog_manager.switch_to(startSG.ref_menu)
+
+
+async def profile_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
+    session: DataInteraction = dialog_manager.middleware_data.get('session')
+    user = await session.get_user(event_from_user.id)
+    text = (f'<b>👤 Ваш профиль</b>\n\n<blockquote>🆔 Telegram ID: {user.user_id}\n💰 Реферальный баланс: {user.earn} ₽'
+            f'\n⭐ Куплено звёзд вами: {user.buys}</blockquote>')
+    return {
+        'text': text
+    }

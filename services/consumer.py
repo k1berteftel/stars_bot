@@ -95,6 +95,7 @@ class TransactionConsumer:
         session: DataInteraction = DataInteraction(sessions)
         application = await session.get_application(app_id)
         user_id = application.user_id
+        user = await session.get_user(user_id)
         try:
             if buy == 'stars':
                 status = await transfer_stars(username, currency)
@@ -131,6 +132,9 @@ class TransactionConsumer:
             await session.add_payment()
             if buy == 'stars':
                 await session.update_buys(user_id, currency)
+                await session.add_buys(currency)
+            if user.referral:
+                await session.update_earn(user.referral, int(application.rub * 0.15))
         except Exception as err:
             try:
                 if self.counter.get(user_id) and self.counter.get(user_id) > 3:

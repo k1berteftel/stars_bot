@@ -11,16 +11,18 @@ from states.state_groups import startSG, adminSG
 user_dialog = Dialog(
     Window(
         DynamicMedia('media'),
-        Const('<b>✨ Добро пожаловать!</b>\n\n'
-              'Здесь можно приобрести Премиум и Telegram звезды без верификации KYC и дешевле чем в приложении.'),
+        Format('<b>✨ Добро пожаловать!</b>\n\n'
+               'Здесь можно приобрести Премиум и Telegram звезды без верификации KYC и дешевле чем в приложении.'
+               '\n\n💫Через наш сервис уже куплено:\n<b>{stars} звезд (~{usdt} $)</b>'),
         Button(Const('⭐️Купить звезды'), id='stars_choose', on_click=getters.buy_choose),
         Row(
             Button(Const('🪙TON'), id='ton_choose', on_click=getters.buy_choose),
             Button(Const('👑Премиум'), id='premium_choose', on_click=getters.buy_choose)
         ),
         Column(
-            SwitchTo(Const('👤Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu),
-            SwitchTo(Const('📋Правила'), id='rules_menu_switcher', state=startSG.rules_menu),
+            SwitchTo(Const('🎁Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu),
+            SwitchTo(Const('👤Профиль'), id='profile_switcher', state=startSG.profile),
+            #SwitchTo(Const('📋Правила'), id='rules_menu_switcher', state=startSG.rules_menu),
             Url(Const('📩Поддержка'), id='support_url', url=Const('https://t.me/TrustStarsHelp')),
             Start(Const('Админ панель'), id='admin', state=adminSG.start, when='admin'),
             Url(Const('🤖Создать своего бота'), id='partner_url', url=Const('https://t.me/TrustPartnersBot')),
@@ -105,7 +107,8 @@ user_dialog = Dialog(
             Url(Const('💲Crypto Bot'), id='crypto_url', url=Format('{crypto_link}')),
             Url(Const('💵Крипта / USDT'), id='oxa_url', url=Format('{oxa_link}')),
             Url(Const('💶СБП'), id='sbp_url', url=Format('{sbp_link}')),
-            Url(Const('💳Карта'), id='card_url', url=Format('{card_link}'))
+            Url(Const('💳Карта'), id='card_url', url=Format('{card_link}')),
+            Button(Const('🎁С баланса'), id='ref_balance_buy', on_click=getters.from_balance_buy),
         ),
         Button(Const('❌Закрыть меню'), id='close_payment', on_click=getters.close_payment),
         getter=getters.payment_menu_getter,
@@ -122,12 +125,12 @@ user_dialog = Dialog(
         getter=getters.ref_menu_getter,
         state=startSG.ref_menu
     ),
-    Window(
-        Format('{text}'),
-        SwitchTo(Const('🔙Назад'), id='back', state=startSG.start),
-        getter=getters.rules_menu_getter,
-        state=startSG.rules_menu
-    ),
+    # Window(
+    #     Format('{text}'),
+    #     SwitchTo(Const('🔙Назад'), id='back', state=startSG.start),
+    #     getter=getters.rules_menu_getter,
+    #     state=startSG.rules_menu
+    # ),
     Window(
         Const('Введите сумму для вывода <em>(в ⭐️)</em>'),
         TextInput(
@@ -136,5 +139,15 @@ user_dialog = Dialog(
         ),
         SwitchTo(Const('🔙Назад'), id='back_ref_menu', state=startSG.ref_menu),
         state=startSG.get_derive_amount
+    ),
+    Window(
+        Format('{text}'),
+        Column(
+    SwitchTo(Const('🎁Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu),
+            Url(Const('📋Правила'), id='rules_url', url=Const('https://telegra.ph/Politika-konfidencialnosti-12-29-42')),
+        ),
+        SwitchTo(Const('🔙Назад'), id='back', state=startSG.start),
+        getter=getters.profile_getter,
+        state=startSG.profile
     ),
 )
