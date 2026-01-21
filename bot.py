@@ -88,8 +88,6 @@ async def main():
     scheduler.start()
     db = DataInteraction(session)
 
-    #await db.add_buys(52578727)
-
     """
     apps = await db.get_user_applications(1914568680)
     applications = [f'{app.__dict__}\n' for app in apps]
