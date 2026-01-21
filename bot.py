@@ -88,7 +88,7 @@ async def main():
     scheduler.start()
     db = DataInteraction(session)
 
-    await db.add_buys(52578727)
+    #await db.add_buys(52578727)
 
     """
     apps = await db.get_user_applications(1914568680)
