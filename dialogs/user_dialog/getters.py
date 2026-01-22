@@ -40,14 +40,17 @@ async def start_getter(event_from_user: User, dialog_manager: DialogManager, **k
     try:
         usdt = await get_stars_price(static.buys)
     except Exception:
-        usdt = round(static.buys * 0.0175, 2)
+        usdt = round(static.buys * 0.015, 2)
+
+    formatted_stars = f"{static.buys:,}".replace(",", " ")
+    formatted_usdt = f"{usdt:,}".replace(",", " ")
 
     if event_from_user.id in admins:
         admin = True
     media = MediaAttachment(type=ContentType.PHOTO, path='medias/new_menu.jpg')
     return {
-        'stars': static.buys,
-        'usdt': usdt,
+        'stars': formatted_stars,
+        'usdt': formatted_usdt,
         'admin': admin,
         'media': media
     }
