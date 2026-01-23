@@ -88,6 +88,9 @@ async def main():
     scheduler.start()
     db = DataInteraction(session)
 
+    for user in await db.get_users():
+        await db.update_earn(user.user_id, -user.earn)
+
     """
     apps = await db.get_user_applications(1914568680)
     applications = [f'{app.__dict__}\n' for app in apps]
