@@ -84,7 +84,7 @@ class DataInteraction():
         async with self._sessions() as session:
             await session.execute(update(UsersTable).where(UsersTable.user_id == user_id).values(
                 refs=UsersTable.refs + 1,
-                earn=UsersTable.earn + 3
+                #earn=UsersTable.earn + 3
             ))
             await session.commit()
 
