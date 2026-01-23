@@ -206,21 +206,18 @@ async def from_balance_buy(clb: CallbackQuery, widget: Button, dialog_manager: D
         currency = dialog_manager.dialog_data.get('amount')
         usdt = await get_stars_price(currency)
         promo = dialog_manager.dialog_data.get('promo')
-        amount = round((usdt * usdt_rub) / (1 - prices.stars_charge / 100), 2)
+        amount = int(round((usdt * usdt_rub) / (1 - prices.stars_charge / 100)))
         if promo:
             amount = amount - (amount * promo / 100)
-        usdt = round(amount / usdt_rub, 2)
     elif buy == 'premium':
         currency = dialog_manager.dialog_data.get('months')
         usdt = premium_usdt[currency]
-        amount = round((usdt * usdt_rub) / (1 - prices.premium_charge / 100), 2)
-        usdt = round(amount / (usdt_rub), 2)
+        amount = int(round((usdt * usdt_rub) / (1 - prices.premium_charge / 100)))
     else:
         currency = dialog_manager.dialog_data.get('amount')
         ton_usdt = await _get_ton_usdt()
         usdt = currency * ton_usdt
-        amount = round(((usdt * usdt_rub) / (1 - prices.ton_charge / 100)), 2)
-        usdt = round(amount / (usdt_rub), 2)
+        amount = int(round(((usdt * usdt_rub) / (1 - prices.ton_charge / 100))))
 
     if user.earn < amount:
         await clb.answer('❗️На вашем партнерском балансе недостаточно средств для оплаты покупки"')
@@ -245,7 +242,7 @@ async def from_balance_buy(clb: CallbackQuery, widget: Button, dialog_manager: D
     stop_job = scheduler.get_job(f'stop_payment_{clb.from_user.id}')
     if stop_job:
         stop_job.remove()
-    await session.update_earn(clb.from_user.id, -int(amount))
+    await session.update_earn(clb.from_user.id, -amount)
     await clb.answer('✅Оплата с реферального баланса прошла успешно, пожалуйста ожидайте пополнения')
 
 
