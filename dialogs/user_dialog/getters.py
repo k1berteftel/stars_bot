@@ -221,6 +221,7 @@ async def from_balance_buy(clb: CallbackQuery, widget: Button, dialog_manager: D
         usdt = currency * ton_usdt
         amount = round(((usdt * usdt_rub) / (1 - prices.ton_charge / 100)), 2)
         usdt = round(amount / (usdt_rub), 2)
+
     if user.earn < amount:
         await clb.answer('❗️На вашем партнерском балансе недостаточно средств для оплаты покупки"')
         return
