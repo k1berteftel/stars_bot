@@ -113,7 +113,7 @@ class ApplicationsTable(Base):
     2 - Оплачен
     3 - Ошибка выполнения
     """
-    payment: Mapped[Literal['sbp', 'card', 'crypto_bot', 'crypto']] = mapped_column(VARCHAR, default=None, nullable=True)
+    payment: Mapped[Literal['sbp', 'card', 'crypto_bot', 'crypto', 'referral']] = mapped_column(VARCHAR, default=None, nullable=True)
     type: Mapped[Literal['stars', 'premium', 'ton']] = mapped_column(VARCHAR, default=None, server_default=None, nullable=True)
 
 

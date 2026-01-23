@@ -245,7 +245,7 @@ async def from_balance_buy(clb: CallbackQuery, widget: Button, dialog_manager: D
     if stop_job:
         stop_job.remove()
     await session.update_earn(clb.from_user.id, -int(amount))
-    await clb.answer('✅Оплата с реферального баланса прошла успешно')
+    await clb.answer('✅Оплата с реферального баланса прошла успешно, пожалуйста ожидайте пополнения')
 
 
 async def buy_choose(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
