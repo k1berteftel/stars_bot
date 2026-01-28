@@ -20,19 +20,19 @@ config: Config = load_config()
 
 async def check_payment(js: JetStreamContext, user_id: int, app_id: int, buy: str, scheduler: AsyncIOScheduler, **kwargs):
     invoice_id = kwargs.get('invoice_id')
-    track_id = kwargs.get('track_id')
+    #track_id = kwargs.get('track_id')
     card_id = kwargs.get('card_id')
     order_id = kwargs.get('order_id')
     crypto_bot = await check_crypto_payment(invoice_id)
-    crypto = await check_oxa_payment(track_id)
-    if crypto_bot or crypto:
+    #crypto = await check_oxa_payment(track_id)
+    if crypto_bot:# or crypto:
         username = kwargs.get('username')
         currency = kwargs.get('currency')
         payment = ''
         if crypto_bot:
             payment = 'crypto_bot'
-        if crypto:
-            payment = 'crypto'
+        # if crypto:
+        #     payment = 'crypto'
         transfer_data = {
             'transfer_type': buy,
             'username': username,

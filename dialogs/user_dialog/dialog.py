@@ -105,7 +105,7 @@ user_dialog = Dialog(
         Const('<em>❗️Счет будет действителен 30 минут</em>'),
         Column(
             Url(Const('💲Crypto Bot'), id='crypto_url', url=Format('{crypto_link}')),
-            Url(Const('💵Крипта / USDT'), id='oxa_url', url=Format('{oxa_link}')),
+            #Url(Const('💵Крипта / USDT'), id='oxa_url', url=Format('{oxa_link}')),
             Url(Const('💶СБП'), id='sbp_url', url=Format('{sbp_link}')),
             Url(Const('💳Карта'), id='card_url', url=Format('{card_link}')),
             Button(Const('🎁С баланса'), id='ref_balance_buy', on_click=getters.from_balance_buy),
