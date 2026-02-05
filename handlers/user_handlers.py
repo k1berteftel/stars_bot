@@ -42,6 +42,7 @@ async def start_dialog(msg: Message, dialog_manager: DialogManager, session: Dat
             await msg.bot.delete_message(chat_id=msg.from_user.id, message_id=msg.message_id - 1)
         except Exception:
             ...
+        await dialog_manager.reset_stack()
     await dialog_manager.start(state=startSG.start, mode=StartMode.RESET_STACK)
 
 
