@@ -109,7 +109,7 @@ async def main():
     bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=storage)
 
-    cache =  TTLCache(
+    cache = TTLCache(
         maxsize=1000,
         ttl=60 * 60 * 3
     )
