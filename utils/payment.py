@@ -1,9 +1,7 @@
 import asyncio
 import datetime
 import json
-import uuid
-import re
-import lxml
+import random
 import hashlib
 import hmac
 
@@ -21,9 +19,7 @@ crypto_bot = AioCryptoPay(token=config.crypto_bot.token, network=Networks.MAIN_N
 
 
 def _get_signature(data: dict, api_key: str):
-    print('data before', data)
     sorted_data = dict(sorted(data.items(), key=lambda item: item[0]))
-    print('data after ', sorted_data)
     message = '|'.join(str(v) for v in sorted_data.values())
     print(message)
     signature = hmac.new(
@@ -33,6 +29,13 @@ def _get_signature(data: dict, api_key: str):
     ).hexdigest()
     sorted_data['signature'] = signature
     return sorted_data
+
+
+def generate_unique_nonce():
+    """Генерирует уникальный nonce"""
+    timestamp = int(datetime.datetime.today().timestamp() * 1000)  # миллисекунды
+    random_part = random.randint(1000, 9999)
+    return int(f"{timestamp}{random_part}")
 
 
 async def get_oxa_payment_data(amount: int | float):
@@ -107,7 +110,7 @@ async def get_freekassa_card(user_id: int, amount: float, app_id: int):
     url = 'https://api.fk.life/v1/orders/create'
     data = {
         'shopId': 32219,
-        'nonce': int(datetime.datetime.today().timestamp()),
+        'nonce': generate_unique_nonce(),
         'us_userId': str(user_id),
         'us_appId': str(app_id),
         'i': 36,
@@ -133,7 +136,7 @@ async def get_freekassa_sbp(user_id: int, amount: float, app_id: int):
     url = 'https://api.fk.life/v1/orders/create'
     data = {
         'shopId': 32219,
-        'nonce': int(datetime.datetime.today().timestamp()),
+        'nonce': generate_unique_nonce(),
         'us_userId': str(user_id),
         'us_appId': str(app_id),
         'i': 44,
