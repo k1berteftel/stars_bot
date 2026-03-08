@@ -37,7 +37,7 @@ async def start_dialog(msg: Message, dialog_manager: DialogManager, session: Dat
     await session.add_user(msg.from_user.id, msg.from_user.username if msg.from_user.username else 'Отсутствует',
                            msg.from_user.full_name, referral=referral, sub_referral=sub_referral)
     if dialog_manager.has_context():
-        await dialog_manager.reset_stack()
+        #await dialog_manager.reset_stack()
         await dialog_manager.done()
         try:
             await msg.bot.delete_message(chat_id=msg.from_user.id, message_id=msg.message_id - 1)
