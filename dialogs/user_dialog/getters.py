@@ -98,6 +98,8 @@ async def payment_menu_getter(event_from_user: User, dialog_manager: DialogManag
     if buy == 'stars':
         currency = dialog_manager.dialog_data.get('amount')
         usdt = await get_stars_price(currency)
+        print(usdt, usdt_rub)
+        return
         promo = dialog_manager.dialog_data.get('promo')
         amount = round((usdt * usdt_rub) / (1 - prices.stars_charge / 100), 2)
         if promo:

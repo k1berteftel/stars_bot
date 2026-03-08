@@ -142,4 +142,4 @@ async def check_user_premium(username: str, months: int):
     return True
 
 
-#print(asyncio.run(transfer_stars('farion', 50)))
+#print(asyncio.run(transfer_stars('Leggit_dev', 50)))
