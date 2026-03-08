@@ -149,7 +149,7 @@ class TransactionConsumer:
                     self.counter[user_id] += 1
                 else:
                     self.counter[user_id] = 1
-                await message.nak(15)
+                #await message.nak(15)
             except Exception:
                 ...
         finally:
