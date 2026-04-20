@@ -112,6 +112,8 @@ config: Config = load_config()
 async def main():
     database = PostgresBuild(config.db.dns)
     #await database.drop_tables(Base)
+    await database.clear()
+    return
     await database.create_tables(Base)
     session = database.session()
     await setup_database(session)
@@ -124,9 +126,6 @@ async def main():
 
     db = DataInteraction(session, cache_manager)
 
-    for link in await db.get_deeplinks():
-        await db.del_deeplink(link.id)
-    return
 
     await start_schedulers(scheduler, db)
 
