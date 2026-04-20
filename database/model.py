@@ -25,6 +25,8 @@ class UsersTable(Base):
     sub_refs: Mapped[int] = mapped_column(Integer, default=0, nullable=True)
     earn: Mapped[int] = mapped_column(Integer, default=0)
 
+    join: Mapped[str] = mapped_column(VARCHAR, nullable=True, default=None)
+
     active: Mapped[int] = mapped_column(Integer, default=1)
     activity: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
     entry: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
@@ -45,8 +47,15 @@ class DeeplinksTable(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
+    name: Mapped[str] = mapped_column(VARCHAR)
     link: Mapped[str] = mapped_column(VARCHAR)
     entry: Mapped[int] = mapped_column(BigInteger, default=0)
+
+    earned: Mapped[int] = mapped_column(Integer, default=0)
+    today: Mapped[int] = mapped_column(Integer, default=0)
+    week: Mapped[int] = mapped_column(Integer, default=0)
+
+    create: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
 
 
 class AdminsTable(Base):
@@ -102,7 +111,7 @@ class ApplicationsTable(Base):
 
     user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'))
     receiver: Mapped[str] = mapped_column(VARCHAR)
-    amount: Mapped[int] = mapped_column(Integer)
+    amount: Mapped[int] = mapped_column(BigInteger)
     rub: Mapped[int] = mapped_column(Integer)
     usdt: Mapped[float] = mapped_column(Float)
     create: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
@@ -114,7 +123,7 @@ class ApplicationsTable(Base):
     3 - Ошибка выполнения
     """
     payment: Mapped[Literal['sbp', 'card', 'crypto_bot', 'crypto', 'referral']] = mapped_column(VARCHAR, default=None, nullable=True)
-    type: Mapped[Literal['stars', 'premium', 'ton']] = mapped_column(VARCHAR, default=None, server_default=None, nullable=True)
+    type: Mapped[Literal['deleted_gift', 'stars', 'premium', 'ton']] = mapped_column(VARCHAR, default=None, server_default=None, nullable=True)
 
 
 class StaticsTable(Base):
@@ -124,5 +133,22 @@ class StaticsTable(Base):
 
     payments: Mapped[int] = mapped_column(BigInteger, default=0)
     buys: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
+
+
+class CashFlowTable(Base):
+    __tablename__ = 'cashflow'
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+
+    earn: Mapped[int] = mapped_column(BigInteger, default=0)
+
+    today: Mapped[int] = mapped_column(Integer, default=0)
+    yesterday: Mapped[int] = mapped_column(Integer, default=0)
+    before_yesterday: Mapped[int] = mapped_column(Integer, default=0)
+
+    week: Mapped[int] = mapped_column(BigInteger, default=0)
+    month: Mapped[int] = mapped_column(BigInteger, default=0)
+
+
 
 

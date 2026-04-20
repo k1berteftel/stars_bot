@@ -38,6 +38,16 @@ services:
       - ./nats/data:/data
       - ./nats/config/server.conf:/config/server.conf
 
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass quest
+    volumes:
+      - redis_data:/data
+
 volumes:
   01-simple-alchemy-pgadmin:
   01-simple-alchemy-postgres:
+  redis_data:

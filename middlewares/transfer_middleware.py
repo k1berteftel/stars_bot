@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.action_data_class import DataInteraction
+from database.cache import CacheManager
 
 logger = logging.getLogger(__name__)
 
@@ -27,17 +28,18 @@ class TransferObjectsMiddleware(BaseMiddleware):
 
         sessions: async_sessionmaker = data.get('_session')
         scheduler: AsyncIOScheduler = data.get('_scheduler')
+        cache_manager: CacheManager = data.get('cache_manager')
 
         cache: TTLCache = data.get('cache')
         users = cache.get('users')
         if not users:
-            db = DataInteraction(sessions)
+            db = DataInteraction(sessions, cache_manager)
             users = [user.id for user in await db.get_block_users()]
             cache['users'] = users
         if user.id in users:
             return
 
-        interaction = DataInteraction(sessions)
+        interaction = DataInteraction(sessions, cache_manager)
         data['session'] = interaction
         data['scheduler'] = scheduler
         return await handler(event, data)

@@ -17,7 +17,7 @@ admin_dialog = Dialog(
             SwitchTo(Const('🛫Сделать рассылку'), id='mailing_menu_switcher', state=adminSG.get_mail),
             SwitchTo(Const('Блокировка пользователей'), id='get_block_user', state=adminSG.get_block_user),
             SwitchTo(Const('Найти заказ'), id='get_app_uid_switcher', state=adminSG.get_app_uid),
-            SwitchTo(Const('🔗 Управление диплинками'), id='deeplinks_menu_switcher', state=adminSG.deeplink_menu),
+            SwitchTo(Const('🔗 Управление диплинками'), id='deeplinks_menu_switcher', state=adminSG.deeplinks_menu),
             SwitchTo(Const('Управление промокодами'), id='promos_menu_switcher', state=adminSG.promos_menu),
             SwitchTo(Const('👥 Управление админами'), id='admin_menu_switcher', state=adminSG.admin_menu),
             SwitchTo(Const('Управление наценкой'), id='charge_menu_switcher', state=adminSG.charge_menu),
@@ -25,6 +25,7 @@ admin_dialog = Dialog(
             Button(Const('📋Выгрузка базы пользователей'), id='get_users_txt', on_click=getters.get_users_txt),
             Button(Const('Выгрузка реф. участников'), id='get_ref_table', on_click=getters.get_ref_table),
             Button(Const('Проверить активность'), id='check_activity', on_click=getters.check_activity),
+            Button(Const('Распределить средства'), id='send_distribute_action', on_click=getters.send_distribute),
         ),
         Cancel(Const('Назад'), id='close_admin'),
         state=adminSG.start
@@ -35,6 +36,7 @@ admin_dialog = Dialog(
             id='get_block_user',
             on_success=getters.get_block_user
         ),
+        SwitchTo(Const('🔙 Назад'), id='back', state=adminSG.start),
         state=adminSG.get_block_user
     ),
     Window(
@@ -129,31 +131,43 @@ admin_dialog = Dialog(
         state=adminSG.del_promo
     ),
     Window(
-        Format('🔗 *Меню управления диплинками*\n\n'
-               '🎯 *Имеющиеся диплинки*:\n{links}'),
+        Format('🔗 *Меню управления диплинками*'),
         Column(
-            Button(Const('➕ Добавить диплинк'), id='add_deeplink', on_click=getters.add_deeplink),
-            SwitchTo(Const('❌ Удалить диплинки'), id='del_deeplinks', state=adminSG.deeplink_del),
-        ),
-        SwitchTo(Const('🔙 Назад'), id='back', state=adminSG.start),
-        getter=getters.deeplink_menu_getter,
-        state=adminSG.deeplink_menu
-    ),
-    Window(
-        Const('❌ Выберите диплинк для удаления'),
-        Group(
             Select(
-                Format('🔗 {item[0]}'),
-                id='deeplink_builder',
+                Format('{item[0]}'),
+                id='deeplinks_menu_builder',
                 item_id_getter=lambda x: x[1],
                 items='items',
-                on_click=getters.del_deeplink
+                on_click=getters.deeplink_choose
             ),
-            width=1
         ),
-        SwitchTo(Const('🔙 Назад'), id='deeplinks_back', state=adminSG.deeplink_menu),
-        getter=getters.del_deeplink_getter,
-        state=adminSG.deeplink_del
+        Row(
+            Button(Const('◀️'), id='back_deeplinks_pager', on_click=getters.deeplinks_pager, when='not_first'),
+            Button(Format('{page}'), id='deeplinks_pager', when='deeplinks'),
+            Button(Const('▶️'), id='next_deeplinks_pager', on_click=getters.deeplinks_pager, when='not_last')
+        ),
+        SwitchTo(Const('➕ Добавить диплинк'), id='add_deeplink', state=adminSG.get_deeplink_name),
+        SwitchTo(Const('🔙 Назад'), id='back', state=adminSG.start),
+        getter=getters.deeplinks_menu_getter,
+        state=adminSG.deeplinks_menu
+    ),
+    Window(
+        Const('Введите название для данной ссылки'),
+        TextInput(
+            id='get_link_name',
+            on_success=getters.get_deeplink_name
+        ),
+        SwitchTo(Const('🔙 Назад'), id='back_deeplinks_menu', state=adminSG.deeplink_menu),
+        state=adminSG.get_deeplink_name
+    ),
+    Window(
+        Format('{text}'),
+        Column(
+            Button(Const('🗑Удалить диплинк'), id='del_deeplink', on_click=getters.del_deeplink),
+        ),
+        SwitchTo(Const('🔙 Назад'), id='back_deeplinks_menu', state=adminSG.deeplinks_menu),
+        getter=getters.deeplink_menu_getter,
+        state=adminSG.deeplink_menu
     ),
     Window(
         Format('👥 *Меню управления администраторами*\n\n {admins}'),

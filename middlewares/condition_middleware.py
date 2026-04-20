@@ -29,7 +29,7 @@ class RemindMiddleware(BaseMiddleware):
         if user is None:
             return await handler(event, data)
         bot: Bot = data.get('bot')
-        #"""
+
         member = await bot.get_chat_member(chat_id=channel_id, user_id=user.id)
         if member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
             keyboard = await get_sub_keyboard()
@@ -39,7 +39,7 @@ class RemindMiddleware(BaseMiddleware):
                 reply_markup=keyboard
             )
             return
-        #"""
+
         session: DataInteraction = data.get('session')
         await session.set_activity(user_id=user.id)
 

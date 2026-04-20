@@ -7,21 +7,27 @@ class startSG(StatesGroup):
     start = State()
 
     rules_menu = State()
-    get_username = State()
-    ton_receipt_menu = State()
-    get_address = State()
-    get_stars_amount = State()
-    get_promo = State()
-    get_premium_rate = State()
-    get_ton_amount = State()
 
-    payment_menu = State()
+    pay_menu = State()
+    get_username = State()
+    get_promo = State()
 
     ref_menu = State()
     get_derive_amount = State()
     get_card = State()
 
     profile = State()
+
+
+class GiftsSG(StatesGroup):
+    choose_gift = State()
+    choose_receiver = State()
+    get_receiver = State()
+
+
+class PaymentSG(StatesGroup):
+    menu = State()
+    process_payment = State()
 
 
 class adminSG(StatesGroup):
@@ -34,8 +40,9 @@ class adminSG(StatesGroup):
     get_keyboard = State()
     confirm_mail = State()
 
+    deeplinks_menu = State()
+    get_deeplink_name = State()
     deeplink_menu = State()
-    deeplink_del = State()
 
     admin_menu = State()
     admin_del = State()

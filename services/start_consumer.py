@@ -7,12 +7,15 @@ from nats.aio.client import Client
 from nats.js.client import JetStreamContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from database.cache import CacheManager
+
 logger = logging.getLogger(__name__)
 
 
 async def start_transfer_consumer(
     nc: Client,
     js: JetStreamContext,
+    cache_manager: CacheManager,
     scheduler: AsyncIOScheduler,
     bot: Bot,
     subject: str,
@@ -22,6 +25,7 @@ async def start_transfer_consumer(
     consumer = TransactionConsumer(
         nc=nc,
         js=js,
+        cache_manager=cache_manager,
         scheduler=scheduler,
         bot=bot,
         subject=subject,

@@ -15,6 +15,7 @@ async def start_dialog(msg: Message, dialog_manager: DialogManager, session: Dat
     args = command.args
     referral = None
     sub_referral = None
+    join = None
     if args:
         link_ids = await session.get_links()
         ids = [i.link for i in link_ids]
@@ -25,7 +26,10 @@ async def start_dialog(msg: Message, dialog_manager: DialogManager, session: Dat
             deeplinks = await session.get_deeplinks()
             deep_list = [i.link for i in deeplinks]
             if args in deep_list:
-                await session.add_entry(args)
+                join = args
+                deeplink = await session.get_deeplink_by_link(args)
+                if deeplink:
+                    await session.add_entry(deeplink.id)
             try:
                 args = int(args)
                 users = [user.user_id for user in await session.get_users()]
@@ -35,7 +39,7 @@ async def start_dialog(msg: Message, dialog_manager: DialogManager, session: Dat
             except Exception as err:
                 print(err)
     await session.add_user(msg.from_user.id, msg.from_user.username if msg.from_user.username else 'Отсутствует',
-                           msg.from_user.full_name, referral=referral, sub_referral=sub_referral)
+                           msg.from_user.full_name, referral=referral, sub_referral=sub_referral, join=join)
     if dialog_manager.has_context():
         #await dialog_manager.reset_stack()
         await dialog_manager.done()

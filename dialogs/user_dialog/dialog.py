@@ -1,94 +1,68 @@
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.kbd import SwitchTo, Column, Row, Button, Group, Select, Start, Url
+from aiogram_dialog.widgets.style import Style
 from aiogram_dialog.widgets.text import Format, Const
 from aiogram_dialog.widgets.input import TextInput
 from aiogram_dialog.widgets.media import DynamicMedia
 
 from dialogs.user_dialog import getters
 
-from states.state_groups import startSG, adminSG
+from states.state_groups import startSG, adminSG, GiftsSG
 
 user_dialog = Dialog(
     Window(
         DynamicMedia('media'),
-        Format('<b>✨ Добро пожаловать!</b>\n\n'
+        Format('<b><tg-emoji emoji-id="5897920748101571572">🌟</tg-emoji> Добро пожаловать!</b>\n\n'
                'Здесь можно приобрести Премиум и Telegram звезды без верификации KYC и дешевле чем в приложении.'
-               '\n\n💫Через наш сервис уже куплено:\n<b>{stars} звезд (~{usdt} $)</b>'),
-        Button(Const('⭐️Купить звезды'), id='stars_choose', on_click=getters.buy_choose),
+               '\n\n<tg-emoji emoji-id="4985783828892091847">☝️</tg-emoji>Через наш сервис уже куплено:\n<b>{stars} звезд (~{usdt} $)</b>'),
+        Button(Const('Купить звезды'), id='stars_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="5463289097336405244")),
         Row(
-            Button(Const('🪙TON'), id='ton_choose', on_click=getters.buy_choose),
-            Button(Const('👑Премиум'), id='premium_choose', on_click=getters.buy_choose)
+            #Button(Const('🪙TON'), id='ton_pay_choose', on_click=getters.buy_choose),
+            Button(Const('Премиум'), id='premium_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="6190484269513586305"))
         ),
         Column(
-            SwitchTo(Const('🎁Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu),
-            SwitchTo(Const('👤Профиль'), id='profile_switcher', state=startSG.profile),
-            #SwitchTo(Const('📋Правила'), id='rules_menu_switcher', state=startSG.rules_menu),
-            Url(Const('📩Поддержка'), id='support_url', url=Const('https://t.me/TrustStarsHelp')),
+            Start(Const('Удаленные подарки'), id='gift_dialog', state=GiftsSG.choose_gift, style=Style(emoji_id="5203996991054432397")),
+            SwitchTo(Const('Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu, style=Style(emoji_id="5377548235709619284")),
+            SwitchTo(Const('Профиль'), id='profile_switcher', state=startSG.profile, style=Style(emoji_id="5467730450002746997")),
+            Url(Const('Поддержка'), id='support_url', url=Const('https://t.me/TrustStarsHelp'), style=Style(emoji_id="5411563083908797492")),
             Start(Const('Админ панель'), id='admin', state=adminSG.start, when='admin'),
-            Url(Const('🤖Создать своего бота'), id='partner_url', url=Const('https://t.me/TrustPartnersBot')),
+            Url(Const('Создать своего бота'), id='partner_url', url=Const('https://t.me/TrustPartnersBot'), style=Style(emoji_id="5309832892262654231")),
+            Url(Const('Наш VPN'), id='vpn_url', url=Const('https://t.me/SolaVpBot'), style=Style(emoji_id="5447410659077661506")),
         ),
         getter=getters.start_getter,
         state=startSG.start
     ),
     Window(
-        Format('Отправьте юзернейм пользователя, которому будем дарить {present}\n\n'
-               '❗️<em>Проверьте, что аккаунт существует.</em>'),
+        Format('{text}'),
+        TextInput(
+            id='get_currency_amount',
+            on_success=getters.get_currency_amount
+        ),
+        Group(
+            Select(
+                Format('{item[0]}'),
+                id='pay_menu_builder',
+                item_id_getter=lambda x: x[1],
+                items='items',
+                on_click=getters.pay_menu_selector
+            ),
+            width=4
+        ),
+        Column(
+            SwitchTo(Format('Получатель: {username}'), id='get_username_switcher', state=startSG.get_username, style=Style(emoji_id="5472239203590888751"))
+        ),
+        SwitchTo(Const('Назад'), id='back', state=startSG.start, style=Style(emoji_id="5388584622328131561")),
+        getter=getters.pay_menu_getter,
+        state=startSG.pay_menu
+    ),
+    Window(
+        Const('<tg-emoji emoji-id="5467730450002746997">🔍</tg-emoji><b>Укажите имя пользователя</b>\n<em>Н-р: @username</em>'),
         TextInput(
             id='get_username',
             on_success=getters.get_username
         ),
-        Button(Const('Покупаю себе'), id='skip_get_username', on_click=getters.skip_get_username),
-        SwitchTo(Const('🔙Назад'), id='back', state=startSG.start),
-        getter=getters.get_username_getter,
+        SwitchTo(Const('Назад'), id='back_pay_menu', state=startSG.pay_menu, style=Style(emoji_id="5388584622328131561")),
         state=startSG.get_username
-    ),
-    Window(
-        Const('🪙Выберите способ получения TON:'),
-        Column(
-            SwitchTo(Const('👤Аккаунт Telegram'), id='get_username_switcher', state=startSG.get_username),
-            Button(Const('👝TON кошелек (скоро будет)'), id='get_address_switcher')  # state=startSG.get_address
-        ),
-        SwitchTo(Const('🔙Назад'), id='back', state=startSG.start),
-        state=startSG.ton_receipt_menu
-    ),
-    Window(
-        Const('Отправьте адрес TON кошелька, на который будем отправлять TON'),
-        state=startSG.get_address
-    ),
-    Window(
-        Format('<b>👤Получатель:</b> {username}'),
-        Const('⭐️Отправьте количество звезд для покупки <em>(минимум 50)</em>'),
-        TextInput(
-            id='get_stars_amount',
-            on_success=getters.get_stars_amount
-        ),
-        SwitchTo(Const('🔙Назад'), id='back_get_username', state=startSG.get_username),
-        getter=getters.get_rate_amount_getter,
-        state=startSG.get_stars_amount
-    ),
-    Window(
-        Format('<b>👤Получатель:</b> {username}'),
-        Const('👑Выберите кол-во месяцев для покупки'),
-        Column(
-            Button(Const('3 месяца'), id='3_months_choose', on_click=getters.premium_rate_choose),
-            Button(Const('6 месяцев'), id='6_months_choose', on_click=getters.premium_rate_choose),
-            Button(Const('12 месяцев'), id='12_months_choose', on_click=getters.premium_rate_choose),
-        ),
-        SwitchTo(Const('🔙Назад'), id='back_get_username', state=startSG.get_username),
-        getter=getters.get_rate_amount_getter,
-        state=startSG.get_premium_rate
-    ),
-    Window(
-        Format('<b>👤Получатель:</b> {username}', when='username'),
-        Format('<b>Адрес получателя: </b> {address}', when='address'),
-        Const('🪙Введите кол-во TON для покупки <em>(от 1 до 100 TON)</em>'),
-        TextInput(
-            id='get_ton_amount',
-            on_success=getters.get_ton_amount
-        ),
-        SwitchTo(Const('🔙Назад'), id='back_ton_receipt_menu', state=startSG.ton_receipt_menu),
-        getter=getters.get_rate_amount_getter,
-        state=startSG.get_ton_amount
     ),
     Window(
         Const('Введите промокод или нажмите "➡️Пропустить", чтобы продолжить покупку звезд'),
@@ -96,57 +70,39 @@ user_dialog = Dialog(
             id='get_promo',
             on_success=getters.get_promo
         ),
-        SwitchTo(Const('➡️Пропустить'), id='miss_promo', state=startSG.payment_menu),
-        SwitchTo(Const('🔙Назад'), id='back_get_stars_amount', state=startSG.get_stars_amount),
+        Column(
+            Button(Const('➡️Пропустить'), id='skip_promo', on_click=getters.skip_promo),
+        ),
+        SwitchTo(Const('Назад'), id='back_pay_menu', state=startSG.pay_menu, style=Style(emoji_id="5388584622328131561")),
         state=startSG.get_promo
     ),
     Window(
         Format('{text}'),
-        Const('<em>❗️Счет будет действителен 30 минут</em>'),
         Column(
-            Url(Const('💲Crypto Bot'), id='crypto_url', url=Format('{crypto_link}')),
-            #Url(Const('💵Крипта / USDT'), id='oxa_url', url=Format('{oxa_link}')),
-            Url(Const('💶СБП'), id='sbp_url', url=Format('{sbp_link}')),
-            Url(Const('💳Карта'), id='card_url', url=Format('{card_link}')),
-            Button(Const('🎁С баланса'), id='ref_balance_buy', on_click=getters.from_balance_buy),
+            Url(Const('Поделиться'), id='share_url', url=Format('{url}'), style=Style(emoji_id="5372849966689566579")),
+            #Button(Const('💰Вывести'), id='get_derive_amount_switcher', on_click=getters.get_derive_amount_switcher),
+            Button(Const('Купить звезды'), id='stars_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="5463289097336405244")),
         ),
-        Button(Const('❌Закрыть меню'), id='close_payment', on_click=getters.close_payment),
-        getter=getters.payment_menu_getter,
-        state=startSG.payment_menu
-    ),
-    Window(
-        Format('{text}'),
-        Column(
-            Url(Const('✈️Поделиться'), id='share_url', url=Format('{url}')),
-            Button(Const('💰Вывести'), id='get_derive_amount_switcher', on_click=getters.get_derive_amount_switcher),
-            Button(Const('⭐️Купить звезды'), id='get_ref_amount_switcher', on_click=getters.get_ref_amount_switcher),
-        ),
-        SwitchTo(Const('🔙Назад'), id='back', state=startSG.start),
+        SwitchTo(Const('Назад'), id='back', state=startSG.start, style=Style(emoji_id="5388584622328131561")),
         getter=getters.ref_menu_getter,
         state=startSG.ref_menu
     ),
-    # Window(
-    #     Format('{text}'),
-    #     SwitchTo(Const('🔙Назад'), id='back', state=startSG.start),
-    #     getter=getters.rules_menu_getter,
-    #     state=startSG.rules_menu
-    # ),
     Window(
-        Const('Введите сумму для вывода <em>(в ⭐️)</em>'),
+        Const('Введите сумму для вывода <em>(в ⭐)</em>'),
         TextInput(
             id='get_derive_amount',
             on_success=getters.get_derive_amount
         ),
-        SwitchTo(Const('🔙Назад'), id='back_ref_menu', state=startSG.ref_menu),
+        SwitchTo(Const('Назад'), id='back_ref_menu', state=startSG.ref_menu, style=Style(emoji_id="5388584622328131561")),
         state=startSG.get_derive_amount
     ),
     Window(
         Format('{text}'),
         Column(
-    SwitchTo(Const('🎁Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu),
-            Url(Const('📋Правила'), id='rules_url', url=Const('https://telegra.ph/Politika-konfidencialnosti-12-29-42')),
+    SwitchTo(Const('Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu, style=Style(emoji_id="5377548235709619284")),
+            Url(Const('Правила'), id='rules_url', url=Const('https://telegra.ph/Politika-konfidencialnosti-12-29-42'), style=Style(emoji_id="5197269100878907942")),
         ),
-        SwitchTo(Const('🔙Назад'), id='back', state=startSG.start),
+        SwitchTo(Const('Назад'), id='back', state=startSG.start, style=Style(emoji_id="5388584622328131561")),
         getter=getters.profile_getter,
         state=startSG.profile
     ),

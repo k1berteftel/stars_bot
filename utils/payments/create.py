@@ -4,17 +4,32 @@ import json
 import random
 import hashlib
 import hmac
+import uuid
 
-from aiohttp import ClientSession
+from cachetools import TTLCache
+
+from aioplatega import Platega, PaymentDetails, PaymentMethodInt, PlategaAPIError
+from aiohttp import ClientSession, BasicAuth
 from aiocryptopay import AioCryptoPay, Networks
 
 from utils.build_ids import get_random_id
 from config_data.config import Config, load_config
 
 
+cache = TTLCache(
+    maxsize=1000,
+    ttl=60 * 1
+)
+
+
+USDT_RUB = 0
+TON_USDT = 0
+
+
 config: Config = load_config()
 
-merchant_api_key = config.oxa.api_key
+oxa_api_key = config.oxa.api_key
+
 crypto_bot = AioCryptoPay(token=config.crypto_bot.token, network=Networks.MAIN_NET)
 
 
@@ -41,7 +56,7 @@ def generate_unique_nonce():
 async def get_oxa_payment_data(amount: int | float):
     url = 'https://api.oxapay.com/v1/payment/invoice'
     headers = {
-        'merchant_api_key': merchant_api_key,
+        'merchant_api_key': oxa_api_key,
         'Content-Type': 'application/json'
     }
     data = {
@@ -104,6 +119,82 @@ async def get_p2p_sbp(amount: int):
         'id': data['id'],
         'order_id': order_id
     }
+
+
+async def get_paypear_sbp(amount: float, app_id: int) -> dict | bool:
+    url = 'https://api.paypear.ru/v1/payment/'
+    auth = BasicAuth(str(config.paypear.shop_id), config.paypear.secret_key)
+    headers = {
+        'Idempotence-Key': str(uuid.uuid4()),
+        'Content-Type': 'application/json'
+    }
+    data = {
+        'amount': {
+            'value': float(amount),
+            'currency': 'RUB'
+        },
+        'confirmation': {
+            'type': 'redirect',
+            'return_url': 'https://t.me/TrustStarsBot'
+        },
+        'order_id': str(uuid.uuid4()),
+        'payment_method_data': {
+            'type': 'sbp'
+        },
+        'metadata': {
+            'app_id': str(app_id)
+        },
+        'webhook_url': 'https://stars-bot.ru/payments/paypear'
+    }
+    async with ClientSession() as session:
+        async with session.post(url, json=data, headers=headers, auth=auth) as resp:
+            if resp.status not in [200, 201]:
+                print(await resp.text())
+                try:
+                    print(await resp.json())
+                except Exception:
+                    ...
+                return False
+            data = await resp.json()
+            if not data.get('success'):
+                return False
+            url = data['result']['confirmation'].get('confirmation_url')
+    return {
+        'url': url
+    }
+
+
+async def get_platega_sbp(amount: float, app_id: int, user_id: int):
+    client = Platega(
+        merchant_id=config.platega.merchant_id,
+        secret=config.platega.secret_key
+    )
+    try:
+        data = await client.create_transaction(
+            payment_method=PaymentMethodInt.SBP_QR,
+            payment_details=PaymentDetails(
+                amount=float(amount),
+                currency='RUB'
+            ),
+            description=f'TgId:{user_id}',
+            return_url='https://t.me/TrustStarsBot',
+            failed_url='https://t.me/TrustStarsBot',
+            payload=str(app_id)
+        )
+        return {
+            'url': data.redirect
+        }
+    except PlategaAPIError as err:
+        print(err)
+        return False
+    except Exception as err:
+        print(err)
+        return False
+    finally:
+        try:
+            await client.close()
+        except Exception:
+            ...
 
 
 async def get_freekassa_card(user_id: int, amount: float, app_id: int):
@@ -184,7 +275,7 @@ async def check_p2p_sbp(order_id: str, id: str):
 async def check_oxa_payment(track_id: str, counter: int = 1) -> bool:
     url = 'https://api.oxapay.com/v1/payment/' + track_id
     headers = {
-        'merchant_api_key': merchant_api_key,
+        'merchant_api_key': oxa_api_key,
         'Content-Type': 'application/json'
     }
     async with ClientSession() as session:
@@ -211,21 +302,38 @@ async def check_crypto_payment(invoice_id: int) -> bool:
 
 
 async def _get_usdt_rub() -> float:
+    global USDT_RUB
     url = 'https://open.er-api.com/v6/latest/USD'
-    async with ClientSession() as session:
-        async with session.get(url) as res:
-            data = await res.json()
-            rub = data['rates']['RUB']
-    return float(rub)
+    cached = cache.get('usdt_rub')
+    if cached:
+        return cached
+    try:
+        async with ClientSession() as session:
+            async with session.get(url) as res:
+                data = await res.json()
+                rub = float(data['rates']['RUB'])
+        cache['usdt_rub'] = rub
+        USDT_RUB = rub
+        return rub
+    except Exception:
+        return USDT_RUB
 
 
 async def _get_ton_usdt() -> float:
+    global TON_USDT
     url = 'https://api.coingecko.com/api/v3/coins/the-open-network'
-    async with ClientSession() as session:
-        async with session.get(url) as res:
-            resp = await res.json()
-            ton = float(resp['market_data']['current_price']['usd'])
-    return ton
+    cached = cache.get('ton_usdt')
+    if cached:
+        return cached
+    try:
+        async with ClientSession() as session:
+            async with session.get(url) as res:
+                resp = await res.json()
+                ton = float(resp['market_data']['current_price']['usd'])
+            cache['ton_usdt'] = ton
+            TON_USDT = ton
+        return ton
+    except Exception:
+        return TON_USDT
 
 
-#print(asyncio.run(get_freekassa_sbp(48472347, 10)))

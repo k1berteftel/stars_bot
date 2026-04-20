@@ -10,24 +10,29 @@ from cachetools import TTLCache
 
 import uvicorn
 
+from redis.asyncio import Redis
 from fastapi import FastAPI
 from aiogram import Bot, Dispatcher
-from aiogram_dialog import setup_dialogs
+from aiogram.types import ErrorEvent
+from aiogram.filters import ExceptionTypeFilter
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram_dialog import setup_dialogs
+from aiogram_dialog.api.exceptions import UnknownIntent, UnknownState, OutdatedIntent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.router import router
 from storage.nats_storage import NatsStorage
 from utils.nats_connect import connect_to_nats
+from utils.start_utils import start_schedulers
 from services.start_consumer import start_transfer_consumer
 from database.build import PostgresBuild
 from database.model import Base
 from database.action_data_class import setup_database, DataInteraction
+from database.cache import CacheManager
 from config_data.config import load_config, Config
 from handlers.user_handlers import user_router
 from dialogs import get_dialogs
-from utils.schedulers import clean_applications
 from middlewares import TransferObjectsMiddleware, RemindMiddleware
 
 
@@ -70,6 +75,33 @@ def log_exception(exc_type, exc_value, exc_traceback):
     logging.error(f"Необработанное исключение:\n{exc_str}")
 
 
+async def on_unknown_intent(event: ErrorEvent, **kwargs):
+    """Обработка устаревших inline-кнопок после перезапуска бота."""
+    logger.warning(f'Unknown intent: {event.exception}')
+    if event.update.callback_query:
+        await event.update.callback_query.answer(
+            '⚠️ Бот был перезапущен. Нажмите /start, чтобы начать заново.',
+            show_alert=True,
+        )
+
+
+async def on_unknown_state(event: ErrorEvent, **kwargs):
+    """Обработка неизвестного состояния диалога."""
+    logger.warning(f'Unknown state: {event.exception}')
+    if event.update.callback_query:
+        await event.update.callback_query.answer(
+            '⚠️ Бот был обновлён. Нажмите /start, чтобы начать заново.',
+            show_alert=True,
+        )
+
+
+def _register_dialog_error_handlers(dp: Dispatcher):
+    """Регистрация обработчиков ошибок aiogram-dialog на диспетчере."""
+    dp.errors.register(on_unknown_intent, ExceptionTypeFilter(UnknownIntent))
+    dp.errors.register(on_unknown_intent, ExceptionTypeFilter(OutdatedIntent))
+    dp.errors.register(on_unknown_state, ExceptionTypeFilter(UnknownState))
+
+
 sys.excepthook = log_exception
 
 logger = logging.getLogger(__name__)
@@ -82,11 +114,19 @@ async def main():
     #await database.drop_tables(Base)
     await database.create_tables(Base)
     session = database.session()
-    #await setup_database(session)
+    await setup_database(session)
 
     scheduler: AsyncIOScheduler = AsyncIOScheduler()
     scheduler.start()
-    db = DataInteraction(session)
+
+    redis = Redis(password=config.redis.password)
+    cache_manager = CacheManager(redis)
+
+    db = DataInteraction(session, cache_manager)
+
+    await db.update_earn(user_id=8005178596, earn=300)
+
+    await start_schedulers(scheduler, db)
 
     """
     apps = await db.get_user_applications(7686062583)
@@ -95,13 +135,6 @@ async def main():
         file.writelines(applications)
     return
     """
-
-    scheduler.add_job(
-        clean_applications,
-        'interval',
-        args=[db],
-        hours=4
-    )
 
     nc, js = await connect_to_nats(servers=config.nats.servers)
     storage: NatsStorage = await NatsStorage(nc=nc, js=js).create_storage()
@@ -120,6 +153,7 @@ async def main():
     # подключаем middleware
     dp.update.middleware(TransferObjectsMiddleware())
     dp.callback_query.middleware(RemindMiddleware())
+    _register_dialog_error_handlers(dp)
 
     # запуск
     await bot.delete_webhook(drop_pending_updates=True)
@@ -137,11 +171,12 @@ async def main():
     uvicorn_config = uvicorn.Config(app, host='0.0.0.0', port=8000, log_level="info")  # ssl_keyfile='ssl/key.pem', ssl_certfile='ssl/cert.pem'
     server = uvicorn.Server(uvicorn_config)
 
-    aiogram_task = asyncio.create_task(dp.start_polling(bot, _session=session, _scheduler=scheduler, js=js, cache=cache))
+    aiogram_task = asyncio.create_task(dp.start_polling(bot, _session=session, _scheduler=scheduler, js=js, cache=cache, cache_manager=cache_manager))
     uvicorn_task = asyncio.create_task(server.serve())
     consumer_task = asyncio.create_task(start_transfer_consumer(
         nc=nc,
         js=js,
+        cache_manager=cache_manager,
         scheduler=scheduler,
         bot=bot,
         subject=config.consumer.subject,
