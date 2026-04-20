@@ -124,6 +124,10 @@ async def main():
 
     db = DataInteraction(session, cache_manager)
 
+    for link in await db.get_deeplinks():
+        await db.del_deeplink(link.id)
+    return
+
     await start_schedulers(scheduler, db)
 
     """

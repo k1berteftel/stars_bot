@@ -25,7 +25,7 @@ class UsersTable(Base):
     sub_refs: Mapped[int] = mapped_column(Integer, default=0, nullable=True)
     earn: Mapped[int] = mapped_column(Integer, default=0)
 
-    join: Mapped[str] = mapped_column(VARCHAR, nullable=True, default=None)
+    join: Mapped[str] = mapped_column(VARCHAR, nullable=True, default=None, server_default=None)
 
     active: Mapped[int] = mapped_column(Integer, default=1)
     activity: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
