@@ -124,8 +124,6 @@ async def main():
 
     db = DataInteraction(session, cache_manager)
 
-    await db.update_earn(user_id=8005178596, earn=300)
-
     await start_schedulers(scheduler, db)
 
     """
