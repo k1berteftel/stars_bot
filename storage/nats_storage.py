@@ -13,7 +13,7 @@ from aiogram.fsm.storage.base import (
 from nats.aio.client import Client
 from nats.js import JetStreamContext
 from nats.js.api import KeyValueConfig
-from nats.js.errors import NotFoundError
+from nats.js.errors import NotFoundError, BucketNotFoundError
 from nats.js.kv import KeyValue
 
 
@@ -42,58 +42,45 @@ class NatsStorage(BaseStorage):
 
     async def _get_kv_states(self) -> KeyValue:
         try:
-            key_value = await self.js.create_key_value(
-                config=KeyValueConfig(
-                    bucket=self.fsm_states_bucket,
-                    history=5,
-                    storage='file'
-                )
-            )
-        except Exception:
+            kv = await self.js.key_value(bucket=self.fsm_states_bucket)
+            return kv
+        except BucketNotFoundError:
             try:
-                await self.js.delete_key_value(bucket=self.fsm_states_bucket)
-            except Exception:
-                ...
-            try:
-                await self.js.delete_object_store(bucket=self.fsm_states_bucket)
-            except Exception:
-                ...
-            key_value = await self.js.create_key_value(
-                config=KeyValueConfig(
-                    bucket=self.fsm_states_bucket,
-                    history=5,
-                    storage='file'
+                kv = await self.js.create_key_value(
+                    config=KeyValueConfig(
+                        bucket=self.fsm_states_bucket,
+                        history=5,
+                        storage='file'
+                    )
                 )
-            )
-
-        return key_value
+                return kv
+            except Exception as create_err:
+                print(f"Could not create bucket: {create_err}")
+                raise
+        except Exception as e:
+            print(f"Unexpected error when accessing bucket: {e}")
+            raise
 
     async def _get_kv_data(self) -> KeyValue:
         try:
-            key_value = await self.js.create_key_value(
-                config=KeyValueConfig(
-                    bucket=self.fsm_data_bucket,
-                    history=5,
-                    storage='file'
-                )
-            )
-        except Exception:
+            kv = await self.js.key_value(bucket=self.fsm_data_bucket)
+            return kv
+        except BucketNotFoundError:
             try:
-                await self.js.delete_key_value(bucket=self.fsm_data_bucket)
-            except Exception:
-                ...
-            try:
-                await self.js.delete_object_store(bucket=self.fsm_data_bucket)
-            except Exception:
-                ...
-            key_value = await self.js.create_key_value(
-                config=KeyValueConfig(
-                    bucket=self.fsm_data_bucket,
-                    history=5,
-                    storage='file'
+                kv = await self.js.create_key_value(
+                    config=KeyValueConfig(
+                        bucket=self.fsm_data_bucket,
+                        history=5,
+                        storage='file'
+                    )
                 )
-            )
-        return key_value
+                return kv
+            except Exception as create_err:
+                print(f"Could not create bucket: {create_err}")
+                raise
+        except Exception as e:
+            print(f"Unexpected error when accessing bucket: {e}")
+            raise
 
     async def set_state(self, key: StorageKey, state: StateType = None) -> None:
         state = state.state if isinstance(state, State) else state
