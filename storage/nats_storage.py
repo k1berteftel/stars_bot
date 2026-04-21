@@ -41,22 +41,59 @@ class NatsStorage(BaseStorage):
         return self
 
     async def _get_kv_states(self) -> KeyValue:
-        return await self.js.create_key_value(
-            config=KeyValueConfig(
-                bucket=self.fsm_states_bucket,
-                history=5,
-                storage='file'
+        try:
+            key_value = await self.js.create_key_value(
+                config=KeyValueConfig(
+                    bucket=self.fsm_states_bucket,
+                    history=5,
+                    storage='file'
+                )
             )
-        )
+        except Exception:
+            try:
+                await self.js.delete_key_value(bucket=self.fsm_states_bucket)
+            except Exception:
+                ...
+            try:
+                await self.js.delete_object_store(bucket=self.fsm_states_bucket)
+            except Exception:
+                ...
+            key_value = await self.js.create_key_value(
+                config=KeyValueConfig(
+                    bucket=self.fsm_states_bucket,
+                    history=5,
+                    storage='file'
+                )
+            )
+
+        return key_value
 
     async def _get_kv_data(self) -> KeyValue:
-        return await self.js.create_key_value(
-            config=KeyValueConfig(
-                bucket=self.fsm_data_bucket,
-                history=5,
-                storage='file'
+        try:
+            key_value = await self.js.create_key_value(
+                config=KeyValueConfig(
+                    bucket=self.fsm_data_bucket,
+                    history=5,
+                    storage='file'
+                )
             )
-        )
+        except Exception:
+            try:
+                await self.js.delete_key_value(bucket=self.fsm_data_bucket)
+            except Exception:
+                ...
+            try:
+                await self.js.delete_object_store(bucket=self.fsm_data_bucket)
+            except Exception:
+                ...
+            key_value = await self.js.create_key_value(
+                config=KeyValueConfig(
+                    bucket=self.fsm_data_bucket,
+                    history=5,
+                    storage='file'
+                )
+            )
+        return key_value
 
     async def set_state(self, key: StorageKey, state: StateType = None) -> None:
         state = state.state if isinstance(state, State) else state
