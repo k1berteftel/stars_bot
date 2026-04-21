@@ -107,6 +107,7 @@ class TransactionConsumer:
             if not status:
                 if application.status != 2:
                     await session.update_application(app_id, 3, payment)
+                    await send_application_log(app_id, session, self.bot)
                 name = f'process_payment_{user_id}'
                 for task in asyncio.all_tasks():
                     if task.get_name() == name:
@@ -123,7 +124,10 @@ class TransactionConsumer:
             for task in asyncio.all_tasks():
                 if task.get_name() == name:
                     task.cancel()
+
             await session.update_application(app_id, 2, payment)
+            await send_application_log(app_id, session, self.bot)
+
             await session.add_payment()
             if buy == 'stars':
                 await session.update_buys(user_id, currency)
@@ -146,7 +150,6 @@ class TransactionConsumer:
             except Exception:
                 ...
         finally:
-            await send_application_log(app_id, session, self.bot)
             await message.ack()
 
     async def unsubscribe(self) -> None:
