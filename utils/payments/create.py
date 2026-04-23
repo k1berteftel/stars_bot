@@ -335,5 +335,3 @@ async def _get_ton_usdt() -> float:
         return ton
     except Exception:
         return TON_USDT
-
-

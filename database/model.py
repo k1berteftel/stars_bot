@@ -122,6 +122,7 @@ class ApplicationsTable(Base):
     2 - Оплачен
     3 - Ошибка выполнения
     """
+    tx_hash: Mapped[str] = mapped_column(VARCHAR, default=None, nullable=True, server_default=None)
     payment: Mapped[Literal['sbp', 'card', 'crypto_bot', 'crypto', 'referral']] = mapped_column(VARCHAR, default=None, nullable=True)
     type: Mapped[Literal['deleted_gift', 'stars', 'premium', 'ton']] = mapped_column(VARCHAR, default=None, server_default=None, nullable=True)
 

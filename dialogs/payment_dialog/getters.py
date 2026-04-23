@@ -8,8 +8,8 @@ from aiogram_dialog.widgets.kbd import Button, Select
 from aiogram_dialog.widgets.input import ManagedTextInput
 from nats.js import JetStreamContext
 
-from utils.payments.create import (get_oxa_payment_data, get_crypto_payment_data,
-                                           get_platega_sbp, get_paypear_sbp, _get_usdt_rub)
+from utils.payments.create import (get_oxa_payment_data, get_crypto_payment_data, get_freekassa_card, get_freekassa_sbp,
+                                           get_platega_sbp, get_paypear_sbp, _get_usdt_rub, _get_ton_usdt)
 from utils.payments.process import wait_for_payment
 from utils.transactions import get_stars_price
 from utils.text_utils import send_application_log
@@ -39,9 +39,11 @@ async def polling_app_status(app_id: int, session: DataInteraction, bot: Bot, ti
     try:
         await asyncio.wait_for(check_app_status(app_id, session), timeout=timeout)
     except TimeoutError:
-        await session.update_application(app_id, 0)
+        await session.update_application(app_id, 0, None)
+        await send_application_log(app_id, session, bot)
     except Exception:
-        await session.update_application(app_id, 0)
+        await session.update_application(app_id, 0, None)
+        await send_application_log(app_id, session, bot)
 
 
 async def menu_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
@@ -74,12 +76,19 @@ async def menu_getter(event_from_user: User, dialog_manager: DialogManager, **kw
         usdt = round(amount / usdt_rub, 2)
         text = (f'<blockquote> - <b>Номер заказа:</b> <code>{{app_id}}</code>\n - Получатель: {username}\n'
                 f' - Количество звезд: {currency}\n - Сумма к оплате: {amount}₽ ({usdt}$)</blockquote>')
-    else:
+    elif rate == 'premium':
         usdt = premium_usdt[currency]
         amount = round((usdt * usdt_rub) / (1 - prices.premium_charge / 100), 2)
-        usdt = round(amount / (usdt_rub), 2)
+        usdt = round(amount / usdt_rub, 2)
         text = (f'<blockquote> - <b>Номер заказа:</b> <code>{{app_id}}</code>\n - Получатель: {username}\n'
                 f' - Подписка на: {currency} (месяцы)\n - Сумма к оплате: {amount}₽ ({usdt}$)</blockquote>')
+    else:
+        ton_usdt = await _get_ton_usdt()
+        usdt = round(currency * ton_usdt, 2)
+        amount = round((usdt * usdt_rub) / (1 - prices.ton_charge / 100), 2)
+        usdt = round(amount / usdt_rub, 2)
+        text = (f'<blockquote> - <b>Номер заказа:</b> <code>{{app_id}}</code>\n - Получатель: {username}\n'
+                f' - Количество TON: {currency}\n - Сумма к оплате: {amount}₽ ({usdt}$)</blockquote>')
     app_id = dialog_manager.dialog_data.get('app_id')
     if not app_id:
         application = await session.add_application(event_from_user.id, username, currency, amount, usdt, rate)
@@ -121,20 +130,24 @@ async def payment_choose(clb: CallbackQuery, widget: Button, dialog_manager: Dia
         if promo:
             amount = amount - (amount * promo / 100)
         usdt = round(amount / usdt_rub, 2)
-    else:
+    elif rate == 'premium':
         usdt = premium_usdt[currency]
         amount = round((usdt * usdt_rub) / (1 - prices.premium_charge / 100), 2)
         usdt = round(amount / (usdt_rub), 2)
+    else:
+        ton_usdt = await _get_ton_usdt()
+        usdt = round(currency * ton_usdt, 2)
+        amount = round((usdt * usdt_rub) / (1 - prices.ton_charge / 100), 2)
+        usdt = round(amount / usdt_rub, 2)
 
     if payment_type == 'card':
-        pass
-        # payment = await get_freekassa_card(clb.from_user.id, amount, app_id)
+        payment = await get_freekassa_card(clb.from_user.id, amount, app_id)
     elif payment_type == 'sbp1':
-        payment = await get_paypear_sbp(amount, app_id)
+        payment = await get_freekassa_sbp(clb.from_user.id, amount, app_id)
     elif payment_type == 'sbp2':
         payment = await get_platega_sbp(amount, app_id, clb.from_user.id)
     elif payment_type == 'crypto':
-        payment = await get_oxa_payment_data(amount)
+        payment = await get_oxa_payment_data(usdt)
         task = asyncio.create_task(
             wait_for_payment(
                 payment_id=payment.get('id'),
@@ -153,7 +166,7 @@ async def payment_choose(clb: CallbackQuery, widget: Button, dialog_manager: Dia
                 active_task.cancel()
         task.set_name(f'process_payment_{clb.from_user.id}')
     else:
-        payment = await get_crypto_payment_data(amount)
+        payment = await get_crypto_payment_data(usdt)
         task = asyncio.create_task(
             wait_for_payment(
                 payment_id=payment.get('id'),
@@ -197,9 +210,13 @@ async def from_balance(clb: CallbackQuery, widget: Button, dialog_manager: Dialo
         amount = int(round((usdt * usdt_rub) / (1 - prices.stars_charge / 100)))
         if promo:
             amount = amount - (amount * promo / 100)
-    else:
+    elif rate == 'premium':
         usdt = premium_usdt[currency]
         amount = int(round((usdt * usdt_rub) / (1 - prices.premium_charge / 100)))
+    else:
+        ton_usdt = await _get_ton_usdt()
+        usdt = round(currency * ton_usdt, 2)
+        amount = round((usdt * usdt_rub) / (1 - prices.ton_charge / 100), 2)
 
     if user.earn < amount:
         await clb.answer('❗️На вашем партнерском балансе недостаточно средств для оплаты покупки"')

@@ -57,21 +57,36 @@ async def buy_choose(clb: CallbackQuery, widget: Button, dialog_manager: DialogM
     dialog_manager.dialog_data.clear()
     rate = clb.data.split('_')[0]
     dialog_manager.dialog_data['rate'] = rate
-    # if rate == 'ton':
-    #     await dialog_manager.switch_to(startSG.ton_receipt_menu)
-    #     return
+    if rate == 'ton':
+        await dialog_manager.switch_to(startSG.choose_ton_method)
+        return
     await dialog_manager.switch_to(state=startSG.pay_menu)
+
+
+async def choose_ton_method(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
+    method = clb.data.split('_')[0]
+    dialog_manager.dialog_data['ton_method'] = method
+    if method == 'address':
+        await dialog_manager.switch_to(startSG.get_ton_address)
+        return
+    await dialog_manager.switch_to(startSG.pay_menu)
+
+
+async def get_ton_address(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
+    dialog_manager.dialog_data['username'] = text
+    await dialog_manager.switch_to(startSG.pay_menu)
 
 
 async def pay_menu_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
     rate = dialog_manager.dialog_data.get('rate')
     username = dialog_manager.dialog_data.get('username')
+    not_address = True
     if not username:
         username = '@' + event_from_user.username
         dialog_manager.dialog_data['username'] = username
     if rate == 'stars':
         text = (f'<b><tg-emoji emoji-id="5897920748101571572">🌟</tg-emoji>Покупка Telegram Stars</b>\n - Получатель: {username}\n\n'
-                f'<em>Чтобы поменять кол-во звезд для покупки <b>введите кол-во звезд текстом<tg-emoji emoji-id="5470177992950946662">👇</tg-emoji> '
+                f'<em>Чтобы установить кол-во звезд для покупки <b>введите кол-во звезд текстом<tg-emoji emoji-id="5470177992950946662">👇</tg-emoji> '
                 f'(от 50 до 25000)</b></em>')
         buttons = [
             ('50', '50'),
@@ -79,18 +94,29 @@ async def pay_menu_getter(event_from_user: User, dialog_manager: DialogManager, 
             ('500', '500'),
             ('1000', '1000')
         ]
-    else:
+    elif rate == 'premium':
         text = (f'<b><tg-emoji emoji-id="6190484269513586305">🌟</tg-emoji>Покупка Telegram Premium</b>\n - Получатель: {username}\n\n'
-                f'<em>Чтобы продолжить выберите внизу тариф подписки<tg-emoji emoji-id="5470177992950946662">👇</tg-emoji> </em>')
+                f'<em>Чтобы продолжить выберите внизу тариф подписки<tg-emoji emoji-id="5470177992950946662">👇</tg-emoji></em>')
         buttons = [
             ('3 месяца', '3'),
             ('6 месяцев', '6'),
             ('12 месяцев', '12')
         ]
+    else:
+        ton_method = dialog_manager.dialog_data.get('ton_method')
+        if ton_method == 'username':
+            text = (f'<b>Покупка TON</b>\n - Получатель: {username}\n\n'
+                    f'<em>Чтобы продолжить введите кол-во TON для приобретения<tg-emoji emoji-id="5470177992950946662">👇</tg-emoji></em>')
+        else:
+            text = (f'<b>Покупка TON</b>\n - Адрес получателя: {username}\n\n'
+                    f'<em>Чтобы продолжить введите кол-во TON для приобретения<tg-emoji emoji-id="5470177992950946662">👇</tg-emoji></em>')
+            not_address = False
+        buttons = []
     return {
         'text': text,
         'items': buttons,
-        'username': username
+        'username': username,
+        'not_address': not_address
     }
 
 
@@ -110,6 +136,13 @@ async def get_currency_amount(msg: Message, widget: ManagedTextInput, dialog_man
         dialog_manager.dialog_data['currency'] = currency
         await dialog_manager.switch_to(startSG.get_promo)
         return
+    elif rate == 'ton':
+        try:
+            currency = float(text)
+        except Exception:
+            await msg.delete()
+            await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Кол-во TON должно быть числом, пожалуйста попробуйте снова')
+            return
     await msg.delete()
     await dialog_manager.switch_to(startSG.pay_menu)
 
@@ -123,6 +156,12 @@ async def pay_menu_selector(clb: CallbackQuery, widget: Select, dialog_manager: 
     rate = dialog_manager.dialog_data.get('rate')
     username = dialog_manager.dialog_data.get('username')
     currency = dialog_manager.dialog_data.get('currency')
+
+    if rate == 'premium':
+        if not await check_user_premium(username, currency):
+            await clb.message.answer(
+                '<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>У данного пользователя уже есть подписка, пожалуйста выберите другого получателя')
+            return
     start_data = {'rate': rate, 'username': username, 'currency': currency}
     await dialog_manager.start(PaymentSG.menu, data=start_data)
 
@@ -157,6 +196,9 @@ async def get_username(msg: Message, widget: ManagedTextInput, dialog_manager: D
     if not match:
         await msg.delete()
         await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Юзернейм должен быть в формате "@username", пожалуйста попробуйте снова')
+        return
+    if not await check_user_premium(username, 3):
+        await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>У данного пользователя уже есть подписка, пожалуйста выберите кого-нибудь другого')
         return
     dialog_manager.dialog_data['username'] = username
     await dialog_manager.switch_to(startSG.pay_menu)

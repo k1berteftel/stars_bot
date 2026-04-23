@@ -17,20 +17,42 @@ user_dialog = Dialog(
                '\n\n<tg-emoji emoji-id="4985783828892091847">☝️</tg-emoji>Через наш сервис уже куплено:\n<b>{stars} звезд (~{usdt} $)</b>'),
         Button(Const('Купить звезды'), id='stars_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="5463289097336405244")),
         Row(
-            #Button(Const('🪙TON'), id='ton_pay_choose', on_click=getters.buy_choose),
+            Button(Const('TON'), id='ton_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="")),
             Button(Const('Премиум'), id='premium_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="6190484269513586305"))
         ),
         Column(
             Start(Const('Удаленные подарки'), id='gift_dialog', state=GiftsSG.choose_gift, style=Style(emoji_id="5203996991054432397")),
             SwitchTo(Const('Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu, style=Style(emoji_id="5377548235709619284")),
             SwitchTo(Const('Профиль'), id='profile_switcher', state=startSG.profile, style=Style(emoji_id="5467730450002746997")),
+        ),
+        Row(
             Url(Const('Поддержка'), id='support_url', url=Const('https://t.me/TrustStarsHelp'), style=Style(emoji_id="5411563083908797492")),
-            Start(Const('Админ панель'), id='admin', state=adminSG.start, when='admin'),
-            Url(Const('Создать своего бота'), id='partner_url', url=Const('https://t.me/TrustPartnersBot'), style=Style(emoji_id="5309832892262654231")),
             Url(Const('Наш VPN'), id='vpn_url', url=Const('https://t.me/SolaVpBot'), style=Style(emoji_id="5447410659077661506")),
+        ),
+        Column(
+            Url(Const('Создать своего бота'), id='partner_url', url=Const('https://t.me/TrustPartnersBot'), style=Style(emoji_id="5309832892262654231")),
+            Start(Const('Админ панель'), id='admin', state=adminSG.start, when='admin'),
         ),
         getter=getters.start_getter,
         state=startSG.start
+    ),
+    Window(
+        Const('Выберите способ получения TON'),
+        Column(
+            Button(Const('На кошелек'), id='address_ton_choose', on_click=getters.choose_ton_method),
+            Button(Const('Юзернейм'), id='username_ton_choose', on_click=getters.choose_ton_method)
+        ),
+        SwitchTo(Const('Назад'), id='back', state=startSG.start, style=Style(emoji_id="5388584622328131561")),
+        state=startSG.choose_ton_method
+    ),
+    Window(
+        Const('Укажите адрес кошелька, на который вы хотели бы приобрести TON'),
+        TextInput(
+            id='get_ton_address',
+            on_success=getters.get_ton_address
+        ),
+        SwitchTo(Const('Назад'), id='back_choose_ton_method', state=startSG.choose_ton_method, style=Style(emoji_id="5388584622328131561")),
+        state=startSG.get_ton_address
     ),
     Window(
         Format('{text}'),
@@ -49,7 +71,8 @@ user_dialog = Dialog(
             width=4
         ),
         Column(
-            SwitchTo(Format('Получатель: {username}'), id='get_username_switcher', state=startSG.get_username, style=Style(emoji_id="5472239203590888751"))
+            SwitchTo(Format('Получатель: {username}'), id='get_username_switcher', state=startSG.get_username,
+                     style=Style(emoji_id="5472239203590888751"), when='not_address')
         ),
         SwitchTo(Const('Назад'), id='back', state=startSG.start, style=Style(emoji_id="5388584622328131561")),
         getter=getters.pay_menu_getter,

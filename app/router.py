@@ -23,7 +23,13 @@ router = APIRouter()
 
 
 ALLOWED_IPS: list[str] = [
-    "158.160.85.101"
+    # paypear
+    "158.160.85.101",
+    # freekassa
+    "168.119.157.136",
+    "168.119.60.227",
+    "178.154.197.79",
+    "51.250.54.238"
 ]
 
 
@@ -106,6 +112,47 @@ async def platega_callback(request: Request):
         'username': application.receiver,
         'currency': application.amount,
         'payments': payment,
+        'app_id': application.uid_key
+    }
+    await send_publisher_data(
+        js=js,
+        subject=config.consumer.subject,
+        data=data
+    )
+    name = f'process_payment_{application.user_id}'
+    for task in asyncio.all_tasks():
+        if task.get_name() == name:
+            task.cancel()
+    return "OK"
+
+
+@router.post('/payments/freekassa')
+async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str | int = Form(...),
+               us_appId: str | int = Form(...)):
+    client_ip = response.client.host
+    if client_ip not in ALLOWED_IPS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"IP {client_ip} is not allowed"
+        )
+    user_id = int(us_userId)
+    session: DataInteraction = response.app.state.session
+    scheduler: AsyncIOScheduler = response.app.state.scheduler
+    js: JetStreamContext = response.app.state.js
+    application = await session.get_application(int(us_appId))
+    if application.status in [0, 2, 3]:
+        return "OK"
+    trans_type = int(CUR_ID)
+    payment = ''
+    if trans_type == 36:
+        payment = 'card'
+    if trans_type == 44:
+        payment = 'sbp'
+    data = {
+        'transfer_type': application.type,
+        'username': application.receiver,
+        'currency': application.amount,
+        'payment': payment,
         'app_id': application.uid_key
     }
     await send_publisher_data(

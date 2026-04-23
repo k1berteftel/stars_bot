@@ -96,17 +96,27 @@ class TransactionConsumer:
         user_id = application.user_id
         user = await session.get_user(user_id)
         try:
+            tx_hash = None
+
             if buy == 'deleted_gift':
                 status = await transfer_gift(username, currency)
             elif buy == 'stars':
-                status = await transfer_stars(username, currency)
+                data = await transfer_stars(username, currency)
+                if data is None:
+                    status = False
+                else:
+                    status, tx_hash = data.get('status'), data.get('tx_hash')
             elif buy == 'premium':
-                status = await transfer_premium(username, currency)
+                data = await transfer_premium(username, currency)
+                if data is None:
+                    status = False
+                else:
+                    status, tx_hash = data.get('status'), data.get('tx_hash')
             else:
                 status = await transfer_ton(username, currency)
             if not status:
                 if application.status != 2:
-                    await session.update_application(app_id, 3, payment)
+                    await session.update_application(app_id, 3, payment, tx_hash)
                     await send_application_log(app_id, session, self.bot)
                 name = f'process_payment_{user_id}'
                 for task in asyncio.all_tasks():
@@ -125,7 +135,7 @@ class TransactionConsumer:
                 if task.get_name() == name:
                     task.cancel()
 
-            await session.update_application(app_id, 2, payment)
+            await session.update_application(app_id, 2, payment, tx_hash)
             await send_application_log(app_id, session, self.bot)
 
             await session.add_payment()

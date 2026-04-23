@@ -211,17 +211,16 @@ class DataInteraction():
             await session.commit()
 
     @invalidates("application:{uid_key}", "applications_list", "user_applications:{user_id}")
-    async def update_application(self, uid_key: int, status: int, payment: str | None):
-        # Получаем application чтобы узнать user_id
-        app = await self.get_application(uid_key)
-        if not app:
-            return
-
+    async def update_application(self, uid_key: int, status: int, payment: str | None, tx_hash: str | None = None):
         async with self._sessions() as session:
             await session.execute(
                 update(ApplicationsTable)
                 .where(ApplicationsTable.uid_key == uid_key)
-                .values(status=status, payment=payment)
+                .values(
+                    status=status,
+                    tx_hash=tx_hash,
+                    payment=payment
+                )
             )
             await session.commit()
 

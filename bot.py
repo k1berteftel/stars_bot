@@ -124,7 +124,6 @@ async def main():
 
     db = DataInteraction(session, cache_manager)
 
-
     await start_schedulers(scheduler, db)
 
     """

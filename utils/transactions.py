@@ -24,7 +24,7 @@ async def get_stars_price(amount: int) -> float:
     return round(amount * per_star, 2)
 
 
-async def transfer_stars(username: str, stars: int) -> bool:
+async def transfer_stars(username: str, stars: int) -> None | dict:
     url = "http://localhost:8090/buy"
     data = {
         'currency': stars,
@@ -35,12 +35,15 @@ async def transfer_stars(username: str, stars: int) -> bool:
         async with session.post(url, json=data, ssl=False) as resp:
             print(resp.status)
             if resp.status not in [200, 201]:
-                return False
+                return None
             data = await resp.json()
             if not data['ok']:
                 logging.error(f'{data.get("message")}')
-                return False
-    return True
+                return None
+    return {
+        'status': data.get('ok'),
+        'tx_hash': data.get('tx_hash')
+    }
 
 
 async def transfer_premium(username: str, months: int):
@@ -54,12 +57,15 @@ async def transfer_premium(username: str, months: int):
         async with session.post(url, json=data, ssl=False) as resp:
             print(resp.status)
             if resp.status not in [200, 201]:
-                return False
+                return None
             data = await resp.json()
             if not data['ok']:
                 logging.error(f'{data.get("message")}')
-                return False
-    return True
+                return None
+    return {
+        'status': data.get('ok'),
+        'tx_hash': data.get('tx_hash')
+    }
 
 
 async def transfer_ton(username: str, amount: int):

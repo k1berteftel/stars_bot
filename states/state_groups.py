@@ -8,6 +8,9 @@ class startSG(StatesGroup):
 
     rules_menu = State()
 
+    choose_ton_method = State()
+    get_ton_address = State()
+
     pay_menu = State()
     get_username = State()
     get_promo = State()
