@@ -45,7 +45,7 @@ async def send_application_log(app_id: int, session: DataInteraction, bot: Bot):
             f'<b>Номер заказа</b>: {application.uid_key}\n<b>Создал</b>: {application.user_id} (@{user.username})'
             f'\n<b>Получатель</b>: {application.receiver}\n<b>Сумма</b>: {application.amount} {amount_text.get(application.type)}\n'
             f'<b>Стоимость</b>: {float(application.rub)}₽ ({application.usdt}$)\n<b>Статус заказа</b>: {statuses[application.status]}'
-            f'\n<b>Метод оплаты</b>: {payments[application.payment]}{f"\n<b>Транзакция</b>: {transaction}" if transaction else ""}'
+            f'\n<b>Метод оплаты</b>: {payments[application.payment]}\n{f"<b>Транзакция</b>: {transaction}" if transaction else ""}'
             f'\n<b>Дата создания</b>: {application.create.strftime("%Y-%m-%d %H:%M:%S")}')
 
     try:
