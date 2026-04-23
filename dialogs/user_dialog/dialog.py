@@ -17,7 +17,7 @@ user_dialog = Dialog(
                '\n\n<tg-emoji emoji-id="4985783828892091847">☝️</tg-emoji>Через наш сервис уже куплено:\n<b>{stars} звезд (~{usdt} $)</b>'),
         Button(Const('Купить звезды'), id='stars_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="5463289097336405244")),
         Row(
-            Button(Const('TON'), id='ton_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="")),
+            #Button(Const('TON'), id='ton_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="")),
             Button(Const('Премиум'), id='premium_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="6190484269513586305"))
         ),
         Column(
