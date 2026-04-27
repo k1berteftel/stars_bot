@@ -17,8 +17,6 @@ from config_data.config import load_config, Config
 from states.state_groups import GiftsSG, PaymentSG
 
 
-
-
 DELETED_GIFTS = [
     {"name": "Пасхальный мишка", "gift_id": "5935895822435615975", "emoji_id": "5393309541620291208", "emoji": "🎁", "price": 100},
     {"name": "Мишка клоун", "gift_id": "5935895822435615975", "emoji_id": "5359736160224586485", "emoji": "🎁", "price": 100},

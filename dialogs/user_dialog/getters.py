@@ -190,6 +190,7 @@ async def skip_promo(clb: CallbackQuery, widget: Button, dialog_manager: DialogM
 
 
 async def get_username(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
+    rate = dialog_manager.dialog_data.get('rate')
     import re
     username = text.strip()
     match = re.match(r"^@?([a-zA-Z0-9_]{5,32})$", username)
@@ -197,9 +198,10 @@ async def get_username(msg: Message, widget: ManagedTextInput, dialog_manager: D
         await msg.delete()
         await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Юзернейм должен быть в формате "@username", пожалуйста попробуйте снова')
         return
-    if not await check_user_premium(username, 3):
-        await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>У данного пользователя уже есть подписка, пожалуйста выберите кого-нибудь другого')
-        return
+    if rate == 'premium':
+        if not await check_user_premium(username, 3):
+            await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>У данного пользователя уже есть подписка, пожалуйста выберите кого-нибудь другого')
+            return
     dialog_manager.dialog_data['username'] = username
     await dialog_manager.switch_to(startSG.pay_menu)
 

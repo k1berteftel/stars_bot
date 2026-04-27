@@ -152,7 +152,7 @@ async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str 
         'transfer_type': application.type,
         'username': application.receiver,
         'currency': application.amount,
-        'payment': payment,
+        'payments': payment,
         'app_id': application.uid_key
     }
     await send_publisher_data(

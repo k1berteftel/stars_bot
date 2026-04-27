@@ -115,7 +115,7 @@ class ApplicationsTable(Base):
     rub: Mapped[int] = mapped_column(Integer)
     usdt: Mapped[float] = mapped_column(Float)
     create: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=False), default=func.now())
-    status: Mapped[Literal[0, 1, 2]] = mapped_column(Integer, default=1)
+    status: Mapped[Literal[0, 1, 2, 3]] = mapped_column(Integer, default=1)
     """
     0 - Не оплачен
     1 - в процессе оплаты
