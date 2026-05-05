@@ -27,7 +27,7 @@ user_dialog = Dialog(
         ),
         Row(
             Url(Const('Поддержка'), id='support_url', url=Const('https://t.me/TrustStarsHelp'), style=Style(emoji_id="5411563083908797492")),
-            Url(Const('Наш VPN'), id='vpn_url', url=Const('https://t.me/SolaVpBot'), style=Style(emoji_id="5447410659077661506")),
+            #Url(Const('Наш VPN'), id='vpn_url', url=Const('https://t.me/SolaVpBot'), style=Style(emoji_id="5447410659077661506")),
         ),
         Column(
             Url(Const('Создать своего бота'), id='partner_url', url=Const('https://t.me/TrustPartnersBot'), style=Style(emoji_id="5309832892262654231")),
