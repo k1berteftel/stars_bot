@@ -11,7 +11,7 @@ fastapi
 uvicorn
 ormsgpack
 openpyxl
-nats-py
+nats-py==2.10.0
 pydantic
 pytz
 environs
