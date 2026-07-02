@@ -129,9 +129,9 @@ async def get_currency_amount(msg: Message, widget: ManagedTextInput, dialog_man
             await msg.delete()
             await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Кол-во звезд должно быть числом, пожалуйста попробуйте снова')
             return
-        if not (50 <= currency < 25000):
+        if not (50 <= currency < 100000):
             await msg.delete()
-            await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Кол-во звезд должно быть быть не меньше 50 и не больше 25000')
+            await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Кол-во звезд должно быть быть не меньше 50 и не больше 100000')
             return
         dialog_manager.dialog_data['currency'] = currency
         await dialog_manager.switch_to(startSG.get_promo)
