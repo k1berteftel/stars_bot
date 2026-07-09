@@ -112,7 +112,8 @@ async def platega_callback(request: Request):
         'username': application.receiver,
         'currency': application.amount,
         'payments': payment,
-        'app_id': application.uid_key
+        'app_id': application.uid_key,
+        'payment_id': str(payload.id)
     }
     await send_publisher_data(
         js=js,
@@ -127,7 +128,7 @@ async def platega_callback(request: Request):
 
 
 @router.post('/payments/freekassa')
-async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str | int = Form(...),
+async def freekassa_callback(response: Request, intid: str | int = Form(...), us_userId: str | int = Form(...), CUR_ID: str | int = Form(...),
                us_appId: str | int = Form(...)):
     client_ip = response.client.host
     if client_ip not in ALLOWED_IPS:
@@ -135,6 +136,7 @@ async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str 
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"IP {client_ip} is not allowed"
         )
+    payment_id = int(intid)
     user_id = int(us_userId)
     session: DataInteraction = response.app.state.session
     scheduler: AsyncIOScheduler = response.app.state.scheduler
@@ -153,7 +155,8 @@ async def ping(response: Request, us_userId: str | int = Form(...), CUR_ID: str 
         'username': application.receiver,
         'currency': application.amount,
         'payments': payment,
-        'app_id': application.uid_key
+        'app_id': application.uid_key,
+        'payment_id': payment_id
     }
     await send_publisher_data(
         js=js,

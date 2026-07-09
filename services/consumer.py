@@ -88,6 +88,7 @@ class TransactionConsumer:
         currency = data.get('currency')
         payment = data.get('payments')
         app_id = data.get('app_id')
+        payment_id = data.get('payment_id', None)
         session: DataInteraction = DataInteraction(sessions, self.cache_manager)
         application = await session.get_application(app_id)
         if application.status != 1:

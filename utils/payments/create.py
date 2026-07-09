@@ -181,6 +181,7 @@ async def get_platega_sbp(amount: float, app_id: int, user_id: int):
             failed_url='https://t.me/TrustStarsBot',
             payload=str(app_id)
         )
+        # print(data.transaction_id, int(data.transaction_id), str(data.transaction_id))
         return {
             'url': data.redirect
         }
@@ -197,6 +198,9 @@ async def get_platega_sbp(amount: float, app_id: int, user_id: int):
             ...
 
 
+# print(asyncio.run(get_platega_sbp(100, 502342, 825353281)))
+
+
 async def get_freekassa_card(user_id: int, amount: float, app_id: int):
     url = 'https://api.fk.life/v1/orders/create'
     data = {
@@ -208,7 +212,8 @@ async def get_freekassa_card(user_id: int, amount: float, app_id: int):
         'email': f'{user_id}@telegram.org',
         'ip': '80.80.116.211',
         'amount': str(amount),
-        'currency': 'RUB'
+        'currency': 'RUB',
+        'paymentId': user_id
     }
     data = _get_signature(data, config.freekassa.api_key)
     async with ClientSession() as session:
@@ -218,6 +223,7 @@ async def get_freekassa_card(user_id: int, amount: float, app_id: int):
                 print(resp.status)
                 return False
             data = await resp.json()
+            # data['orderId']  # ID заказа: int
     return {
         'url': data['location'],
     }
@@ -234,7 +240,8 @@ async def get_freekassa_sbp(user_id: int, amount: float, app_id: int):
         'email': f'{user_id}@telegram.org',
         'ip': '80.80.116.211',
         'amount': str(amount),
-        'currency': 'RUB'
+        'currency': 'RUB',
+        'paymentId': user_id
     }
     data = _get_signature(data, config.freekassa.api_key)
     async with ClientSession() as session:
@@ -244,9 +251,14 @@ async def get_freekassa_sbp(user_id: int, amount: float, app_id: int):
                 print(resp.status)
                 return False
             data = await resp.json()
+            # data['orderId']  # ID заказа: int
+            print(data)
     return {
         'url': data['location'],
     }
+
+
+#print(asyncio.run(get_freekassa_sbp(825353281, 140000, 502342)))
 
 
 async def check_p2p_sbp(order_id: str, id: str):

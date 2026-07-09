@@ -6,7 +6,7 @@ from database.action_data_class import DataInteraction
 channel_id = -1003970166132
 
 
-async def send_application_log(app_id: int, session: DataInteraction, bot: Bot):
+async def send_application_log(app_id: int, session: DataInteraction, bot: Bot, payment_id: str | None = None):
     application = await session.get_application(app_id)
     user = await session.get_user(application.user_id)
     statuses = {
@@ -41,7 +41,11 @@ async def send_application_log(app_id: int, session: DataInteraction, bot: Bot):
     if application.tx_hash:
         transaction = f'https://tonviewer.com/transaction/{application.tx_hash}'
 
-    text = (f'<b>Тип заказа</b>: {types.get(application.type)}\n'
+    payment = ''
+    if payment_id:
+        payment = f'<em>Номер заказа в платежной системе</em>: {payment_id}'
+
+    text = (f'<b>Тип заказа</b>: {types.get(application.type)}\n{payment if payment else ""}\n'
             f'<b>Номер заказа</b>: {application.uid_key}\n<b>Создал</b>: {application.user_id} (@{user.username})'
             f'\n<b>Получатель</b>: {application.receiver}\n<b>Сумма</b>: {application.amount} {amount_text.get(application.type)}\n'
             f'<b>Стоимость</b>: {float(application.rub)}₽ ({application.usdt}$)\n<b>Статус заказа</b>: {statuses[application.status]}'
