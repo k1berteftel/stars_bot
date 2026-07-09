@@ -87,7 +87,7 @@ async def pay_menu_getter(event_from_user: User, dialog_manager: DialogManager, 
     if rate == 'stars':
         text = (f'<b><tg-emoji emoji-id="5897920748101571572">🌟</tg-emoji>Покупка Telegram Stars</b>\n - Получатель: {username}\n\n'
                 f'<em>Чтобы установить кол-во звезд для покупки <b>введите кол-во звезд текстом<tg-emoji emoji-id="5470177992950946662">👇</tg-emoji> '
-                f'(от 50 до 25000)</b></em>')
+                f'(минимум 50)</b></em>')
         buttons = [
             ('50', '50'),
             ('100', '100'),

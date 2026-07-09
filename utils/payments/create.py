@@ -213,7 +213,7 @@ async def get_freekassa_card(user_id: int, amount: float, app_id: int):
         'ip': '80.80.116.211',
         'amount': str(amount),
         'currency': 'RUB',
-        'paymentId': user_id
+        'paymentId': app_id
     }
     data = _get_signature(data, config.freekassa.api_key)
     async with ClientSession() as session:
@@ -241,7 +241,7 @@ async def get_freekassa_sbp(user_id: int, amount: float, app_id: int):
         'ip': '80.80.116.211',
         'amount': str(amount),
         'currency': 'RUB',
-        'paymentId': user_id
+        'paymentId': app_id
     }
     data = _get_signature(data, config.freekassa.api_key)
     async with ClientSession() as session:
