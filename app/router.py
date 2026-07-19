@@ -11,6 +11,7 @@ from aioplatega import CallbackPayload
 
 from nats.js import JetStreamContext
 
+from utils.log_utils import write_log
 from services.publisher import send_publisher_data
 from database.action_data_class import DataInteraction
 from utils.transactions import transfer_stars, transfer_ton, transfer_premium
@@ -141,6 +142,7 @@ async def freekassa_callback(response: Request, intid: str | int = Form(...), us
     session: DataInteraction = response.app.state.session
     scheduler: AsyncIOScheduler = response.app.state.scheduler
     js: JetStreamContext = response.app.state.js
+    write_log(f'Заказ номер {us_appId} был принят платежным хендлером freekassa\n')
     application = await session.get_application(int(us_appId))
     if application.status in [0, 2, 3]:
         return "OK"
@@ -158,6 +160,7 @@ async def freekassa_callback(response: Request, intid: str | int = Form(...), us
         'app_id': application.uid_key,
         'payment_id': payment_id
     }
+    write_log(f'Заказ номер {us_appId} отправляется в консьюмер\n')
     await send_publisher_data(
         js=js,
         subject=config.consumer.subject,

@@ -10,6 +10,7 @@ from nats.js import JetStreamContext
 
 from utils.payments.create import (get_oxa_payment_data, get_crypto_payment_data, get_freekassa_card, get_freekassa_sbp,
                                            get_platega_sbp, get_paypear_sbp, _get_usdt_rub, _get_ton_usdt)
+from utils.log_utils import write_log
 from utils.payments.process import wait_for_payment
 from utils.transactions import get_stars_price
 from utils.text_utils import send_application_log
@@ -92,6 +93,7 @@ async def menu_getter(event_from_user: User, dialog_manager: DialogManager, **kw
     app_id = dialog_manager.dialog_data.get('app_id')
     if not app_id:
         application = await session.add_application(event_from_user.id, username, currency, amount, usdt, rate)
+        write_log(f'Заказ {app_id} был создан (Тариф: {rate}, Валюта: {currency}, Стоимость Р: {amount}, ID: {event_from_user.id})\n')
         app_id = application.uid_key
         dialog_manager.dialog_data['app_id'] = app_id
     text = text.format(app_id=app_id)
@@ -141,10 +143,13 @@ async def payment_choose(clb: CallbackQuery, widget: Button, dialog_manager: Dia
         usdt = round(amount / usdt_rub, 2)
 
     if payment_type == 'card':
+        write_log(f'Заказ номер {app_id} создало платеж на карту\n')
         payment = await get_freekassa_card(clb.from_user.id, amount, app_id)
     elif payment_type == 'sbp1':
+        write_log(f'Заказ номер {app_id} создало платеж на сбп фрикасса\n')
         payment = await get_freekassa_sbp(clb.from_user.id, amount, app_id)
     elif payment_type == 'sbp2':
+        write_log(f'Заказ номер {app_id} создало платеж на сбп платега\n')
         payment = await get_platega_sbp(amount, app_id, clb.from_user.id)
     elif payment_type == 'crypto':
         payment = await get_oxa_payment_data(usdt)

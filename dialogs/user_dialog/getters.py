@@ -15,6 +15,7 @@ from nats.js import JetStreamContext
 from services.publisher import send_publisher_data
 from utils.tables import get_table
 from utils.transactions import check_user_premium, get_stars_price
+from utils.log_utils import write_log
 from database.action_data_class import DataInteraction
 from config_data.config import load_config, Config
 from states.state_groups import startSG, PaymentSG
@@ -122,7 +123,9 @@ async def pay_menu_getter(event_from_user: User, dialog_manager: DialogManager, 
 
 async def get_currency_amount(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
     await msg.answer('Покупка временно не работает, попробуйте позже')
-    return
+    if msg.from_user.id != 8005178596:  # для теста лога системы
+        return
+    write_log('Создание заказа...\n')
     rate = dialog_manager.dialog_data.get('rate')
     if rate == 'stars':
         try:

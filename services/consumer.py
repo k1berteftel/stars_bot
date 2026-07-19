@@ -13,6 +13,7 @@ from nats.js import JetStreamContext
 from nats.js.api import StreamConfig, StorageType, RetentionPolicy
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from utils.log_utils import write_log
 from utils.transactions import transfer_stars, transfer_ton, transfer_premium, transfer_gift
 from utils.text_utils import send_application_log
 from database.action_data_class import DataInteraction
@@ -89,6 +90,7 @@ class TransactionConsumer:
         payment = data.get('payments')
         app_id = data.get('app_id')
         payment_id = data.get('payment_id', None)
+        write_log(f'Заказ номер {app_id} был принят консьюмером\n')
         session: DataInteraction = DataInteraction(sessions, self.cache_manager)
         application = await session.get_application(app_id)
         if application.status != 1:
@@ -117,6 +119,7 @@ class TransactionConsumer:
                 status = await transfer_ton(username, currency)
             if not status:
                 if application.status != 2:
+                    write_log(f'Заказ номер {app_id} обновлен в базе данных как неуспешный\n')
                     await session.update_application(app_id, 3, payment, tx_hash)
                     await send_application_log(app_id, session, self.bot)
                 name = f'process_payment_{user_id}'
@@ -136,6 +139,7 @@ class TransactionConsumer:
                 if task.get_name() == name:
                     task.cancel()
 
+            write_log(f'Заказ номер {app_id} обновлен в базе данных как успешный\n')
             await session.update_application(app_id, 2, payment, tx_hash)
             await send_application_log(app_id, session, self.bot)
 
