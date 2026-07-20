@@ -142,7 +142,7 @@ async def freekassa_callback(response: Request, intid: str | int = Form(...), us
     session: DataInteraction = response.app.state.session
     scheduler: AsyncIOScheduler = response.app.state.scheduler
     js: JetStreamContext = response.app.state.js
-    write_log(f'Заказ номер {us_appId} был принят платежным хендлером freekassa\n')
+    #write_log(f'Заказ номер {us_appId} был принят платежным хендлером freekassa\n')
     application = await session.get_application(int(us_appId))
     if application.status in [0, 2, 3]:
         return "OK"
@@ -160,7 +160,7 @@ async def freekassa_callback(response: Request, intid: str | int = Form(...), us
         'app_id': application.uid_key,
         'payment_id': payment_id
     }
-    write_log(f'Заказ номер {us_appId} отправляется в консьюмер\n')
+    #write_log(f'Заказ номер {us_appId} отправляется в консьюмер\n')
     await send_publisher_data(
         js=js,
         subject=config.consumer.subject,

@@ -122,10 +122,10 @@ async def pay_menu_getter(event_from_user: User, dialog_manager: DialogManager, 
 
 
 async def get_currency_amount(msg: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str):
-    await msg.answer('Покупка временно не работает, попробуйте позже')
-    if msg.from_user.id != 8005178596:  # для теста лога системы
-        return
-    write_log('Создание заказа...\n')
+    # await msg.answer('Покупка временно не работает, попробуйте позже')
+    # if msg.from_user.id != 8005178596:  # для теста лога системы
+    #     return
+    #write_log('Создание заказа...\n')
     rate = dialog_manager.dialog_data.get('rate')
     if rate == 'stars':
         try:
@@ -153,8 +153,8 @@ async def get_currency_amount(msg: Message, widget: ManagedTextInput, dialog_man
 
 
 async def pay_menu_selector(clb: CallbackQuery, widget: Select, dialog_manager: DialogManager, item_id: str):
-    await clb.answer('Покупка временно не работает, попробуйте позже')
-    return
+    # await clb.answer('Покупка временно не работает, попробуйте позже')
+    # return
     dialog_manager.dialog_data['currency'] = int(item_id)
     rate = dialog_manager.dialog_data.get('rate')
     if rate == 'stars':
