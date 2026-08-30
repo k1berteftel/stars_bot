@@ -73,6 +73,13 @@ class Platega:
 
 
 @dataclass
+class Lava:
+    secret_key_1: str
+    secret_key_2: str
+    shop_id: str
+
+
+@dataclass
 class Config:
     bot: tg_bot
     db: DB
@@ -86,6 +93,7 @@ class Config:
     freekassa: FreeKassa
     paypear: Paypear
     platega: Platega
+    lava: Lava
 
 
 def load_config(path: str | None = None) -> Config:
@@ -133,5 +141,10 @@ def load_config(path: str | None = None) -> Config:
         platega=Platega(
             merchant_id=env('platega_merchant_id'),
             secret_key=env('platega_secret_key')
+        ),
+        lava=Lava(
+            secret_key_1=env('lava_secret_key_1'),
+            secret_key_2=env('lava_secret_key_2'),
+            shop_id=env('lava_shop_id')
         )
     )

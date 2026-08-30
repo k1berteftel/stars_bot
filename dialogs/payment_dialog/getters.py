@@ -9,7 +9,7 @@ from aiogram_dialog.widgets.input import ManagedTextInput
 from nats.js import JetStreamContext
 
 from utils.payments.create import (get_oxa_payment_data, get_crypto_payment_data, get_freekassa_card, get_freekassa_sbp,
-                                           get_platega_sbp, get_paypear_sbp, _get_usdt_rub, _get_ton_usdt)
+                                   _get_usdt_rub, _get_ton_usdt)
 from utils.log_utils import write_log
 from utils.payments.process import wait_for_payment
 from utils.transactions import get_stars_price

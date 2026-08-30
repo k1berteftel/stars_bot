@@ -216,10 +216,10 @@ async def get_username(msg: Message, widget: ManagedTextInput, dialog_manager: D
 async def ref_menu_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     user = await session.get_user(event_from_user.id)
-    text = (f'<b><tg-emoji emoji-id="5377548235709619284">🤑</tg-emoji> Партнерская программа</b>\n\nПриглашайте людей и получайте по 15% от их навсегда\n\n'
+    text = (f'<b><tg-emoji emoji-id="5377548235709619284">🤑</tg-emoji> Партнерская программа</b>\n\nПриглашайте людей и получайте по 15% от их покупок звезд навсегда\n\n'
             f'<b>Ваша партнерская ссылка:\n</b>t.me/TrustStarsBot?start={event_from_user.id}\n\n<b>Статистика вашей партнерки:</b>'
-            f'\n\t- Рефералов: {user.refs}\n\t- Баланс: {user.earn} ₽\n\n<em>С данного баланса вы можете приобретать '
-            f'продаваемую нами продукцию.</em>')
+            f'\n\t- Рефералов: {user.refs}\n\t- Баланс: {user.earn} ⭐️')
+            #f'\n\n<em>С данного баланса вы можете приобретать продаваемую нами продукцию.</em>')
     return {
         'text': text,
         'url': f'http://t.me/share/url?url=https://t.me/TrustStarsBot?start={event_from_user.id}'
@@ -229,8 +229,8 @@ async def ref_menu_getter(event_from_user: User, dialog_manager: DialogManager, 
 async def get_derive_amount_switcher(clb: CallbackQuery, widget: Button, dialog_manager: DialogManager):
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     user = await session.get_user(clb.from_user.id)
-    if user.earn < 100:
-        await clb.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Сумма для вывода от 100 ₽ или более .')
+    if user.earn < 300:
+        await clb.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Сумма для вывода от 300 ⭐️ или более .')
         return
     await dialog_manager.switch_to(startSG.get_derive_amount)
 
@@ -242,8 +242,8 @@ async def get_derive_amount(msg: Message, widget: ManagedTextInput, dialog_manag
         await msg.delete()
         await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Сумма для вывода должна быть числом, пожалуйста попробуйте снова')
         return
-    if amount < 100:
-        await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Сумма для вывода не может быть меньше 50')
+    if amount < 300:
+        await msg.answer('<tg-emoji emoji-id="5467928559664242360">❗️</tg-emoji>Сумма для вывода не может быть меньше 300⭐️')
         return
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     msg_user = await session.get_user(msg.from_user.id)
@@ -286,7 +286,7 @@ async def get_derive_amount(msg: Message, widget: ManagedTextInput, dialog_manag
     text = (f'<b>Заявка на вывод средств</b>\n\nДанные о пользователе:\n'
             f'- Никнейм: {msg_user.name}\n - Username: @{msg_user.username}'
             f'\n - Telegram Id: {msg.from_user.id}\n - Рефералы: {msg_user.refs}\n - Рефералы 2: {msg_user.sub_refs}'
-            f'\n - Общий баланс: {msg_user.earn} ️₽\n - <b>Сумма для вывода</b>: {amount} ₽')
+            f'\n - Общий баланс: {msg_user.earn} ️⭐️\n - <b>Сумма для вывода</b>: {amount} ⭐️')
     builder = MediaGroupBuilder(caption=text)
     builder.add_document(FSInputFile(path=table_1))
     builder.add_document(FSInputFile(path=table_2))

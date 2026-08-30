@@ -46,6 +46,13 @@ def _get_signature(data: dict, api_key: str):
     return sorted_data
 
 
+def _get_lava_signature(params: dict):
+    secret_key = config.lava.secret_key_1
+    body = json.dumps(params)
+    signature = hmac.new(secret_key.encode(), body.encode(), hashlib.sha256).hexdigest()
+    return signature
+
+
 def generate_unique_nonce():
     """Генерирует уникальный nonce"""
     timestamp = int(datetime.datetime.today().timestamp() * 1000)  # миллисекунды
@@ -257,8 +264,48 @@ async def get_freekassa_sbp(user_id: int, amount: float, app_id: int):
         'url': data['location'],
     }
 
-
 #print(asyncio.run(get_freekassa_sbp(825353281, 140000, 502342)))
+
+
+async def get_lava_payment(user_id: int, amount: float, app_id: int, description: str):
+    url = 'https://api.lava.ru/business/invoice/create'
+    headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        'sum': amount,
+        'orderId': f'order-{random.randint(1000, 10000)}',
+        'shopId': config.lava.shop_id,
+        'hookUrl': 'https://stars-bot.ru/payments/lava',
+        'customFields': f'"user_id": {user_id}, "app_id": {app_id}',
+        'comment': description,
+        'successUrl': 'https://t.me/TrustStarsBot',
+        'failUrl': 'https://t.me/TrustStarsBot',
+        'expire': 60 * 15,
+        'includeService': ['card', 'sbp']
+    }
+    headers['Signature'] = _get_lava_signature(data)
+    async with ClientSession() as session:
+        async with session.post(url, json=data, headers=headers) as res:
+            if res.status != 200:
+                try:
+                    print(await res.json())
+                except Exception:
+                    print(await res.text())
+                print(res.status)
+                return False
+            data = await res.json()
+            if data.get('status') != 200:
+                print(data)
+                return False
+            url = data['data'].get('url')
+    return {
+        'url': url
+    }
+
+
+print(asyncio.run(get_lava_payment(8005178596, 50.0, 1001, 'Тестовая')))
 
 
 async def check_p2p_sbp(order_id: str, id: str):
@@ -347,3 +394,5 @@ async def _get_ton_usdt() -> float:
         return ton
     except Exception:
         return TON_USDT
+
+

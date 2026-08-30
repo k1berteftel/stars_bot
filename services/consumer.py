@@ -149,8 +149,8 @@ class TransactionConsumer:
                 await session.add_buys(currency)
             await session.add_cashflow(int(application.rub))
 
-            if user.referral:
-                await session.update_earn(user.referral, int(application.rub * 0.15))
+            if user.referral and application.type == 'stars':
+                await session.update_earn(user.referral, int(application.amount * 0.15))
 
             if user.join:
                 await session.update_deeplink_earn(user.join, int(application.rub))

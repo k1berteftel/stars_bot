@@ -1,6 +1,8 @@
 import datetime
 import json
 import asyncio
+import hmac
+import hashlib
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
@@ -32,6 +34,13 @@ ALLOWED_IPS: list[str] = [
     "178.154.197.79",
     "51.250.54.238"
 ]
+
+
+def check_lava_signature(params: dict, signature: str):
+    secret_key = config.lava.secret_key_2
+    body = json.dumps(params)
+    check_signature = hmac.new(secret_key.encode(), body.encode(), hashlib.sha256).hexdigest()
+    return check_signature == signature
 
 
 @router.post("/payments/paypear")
@@ -171,3 +180,53 @@ async def freekassa_callback(response: Request, intid: str | int = Form(...), us
         if task.get_name() == name:
             task.cancel()
     return "OK"
+
+
+@router.post('/payments/lava')
+async def lava_callback(response: Request):
+    raw_data = await response.body()
+    try:
+        data = json.loads(raw_data)
+        print(data)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format")
+    headers = dict(response.headers)
+    signature = response.headers.get('Signature')
+    if not check_lava_signature(data, signature):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Signature is not allowed"
+        )
+    session: DataInteraction = response.app.state.session
+    scheduler: AsyncIOScheduler = response.app.state.scheduler
+    js: JetStreamContext = response.app.state.js
+
+    #write_log(f'Заказ номер {us_appId} был принят платежным хендлером lava\n')
+
+    custom_fields = json.loads(data.get('custom_fields'))
+
+    application = await session.get_application(int(custom_fields.get('app_id')))
+    if application.status in [0, 2, 3]:
+        return "OK"
+
+    payment = 'card'
+    data = {
+        'transfer_type': application.type,
+        'username': application.receiver,
+        'currency': application.amount,
+        'payments': payment,
+        'app_id': application.uid_key
+    }
+    #write_log(f'Заказ номер {us_appId} отправляется в консьюмер\n')
+    await send_publisher_data(
+        js=js,
+        subject=config.consumer.subject,
+        data=data
+    )
+    name = f'process_payment_{application.user_id}'
+    for task in asyncio.all_tasks():
+        if task.get_name() == name:
+            task.cancel()
+    return "OK"
+
+
