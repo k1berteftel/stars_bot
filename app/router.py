@@ -40,6 +40,7 @@ def check_lava_signature(params: dict, signature: str):
     secret_key = config.lava.secret_key_2
     body = json.dumps(params)
     check_signature = hmac.new(secret_key.encode(), body.encode(), hashlib.sha256).hexdigest()
+    print(check_signature, signature)
     return check_signature == signature
 
 
@@ -191,7 +192,7 @@ async def lava_callback(response: Request):
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format")
     headers = dict(response.headers)
-    signature = response.headers.get('Signature')
+    signature = headers.get('Signature')
     if not check_lava_signature(data, signature):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -208,8 +209,12 @@ async def lava_callback(response: Request):
     application = await session.get_application(int(custom_fields.get('app_id')))
     if application.status in [0, 2, 3]:
         return "OK"
-
     payment = 'card'
+    trans_type = data.get('pay_service')
+    if trans_type == 36:
+        payment = 'card'
+    if trans_type == 44:
+        payment = 'sbp'
     data = {
         'transfer_type': application.type,
         'username': application.receiver,

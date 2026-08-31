@@ -305,7 +305,7 @@ async def get_lava_payment(user_id: int, amount: float, app_id: int, description
     }
 
 
-print(asyncio.run(get_lava_payment(8005178596, 50.0, 1001, 'Тестовая')))
+#print(asyncio.run(get_lava_payment(8005178596, 50.0, 1001, 'Тестовая')))
 
 
 async def check_p2p_sbp(order_id: str, id: str):
