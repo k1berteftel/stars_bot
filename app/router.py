@@ -192,6 +192,7 @@ async def lava_callback(response: Request):
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format")
     headers = dict(response.headers)
+    print(headers.items())
     signature = headers.get('Signature')
     if not check_lava_signature(data, signature):
         raise HTTPException(
