@@ -216,7 +216,8 @@ async def get_username(msg: Message, widget: ManagedTextInput, dialog_manager: D
 async def ref_menu_getter(event_from_user: User, dialog_manager: DialogManager, **kwargs):
     session: DataInteraction = dialog_manager.middleware_data.get('session')
     user = await session.get_user(event_from_user.id)
-    text = (f'<b><tg-emoji emoji-id="5377548235709619284">🤑</tg-emoji> Партнерская программа</b>\n\nПриглашайте людей и получайте по 15% от их покупок звезд навсегда\n\n'
+    text = (f'<b><tg-emoji emoji-id="5377548235709619284">🤑</tg-emoji> Партнерская программа</b>\n\nПриглашайте '
+            f'людей и получайте по 3⭐️ за каждого приглашенного\n\n'
             f'<b>Ваша партнерская ссылка:\n</b>t.me/TrustStarsBot?start={event_from_user.id}\n\n<b>Статистика вашей партнерки:</b>'
             f'\n\t- Рефералов: {user.refs}\n\t- Баланс: {user.earn} ⭐️')
             #f'\n\n<em>С данного баланса вы можете приобретать продаваемую нами продукцию.</em>')
