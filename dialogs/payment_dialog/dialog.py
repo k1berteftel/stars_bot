@@ -20,7 +20,7 @@ payment_dialog = Dialog(
             Button(Const('Карта'), id='card_payment_choose', on_click=getters.payment_choose, style=Style(emoji_id="5801180866071760635")),
             Button(Const('CryptoBot'), id='cb_payment_choose', on_click=getters.payment_choose, style=Style(emoji_id="5361836987642815474")),
             #Button(Const('💲Крипта'), id='crypto_payment_choose', on_click=getters.payment_choose),
-            Button(Const('С баланса'), id='ref_balance_buy', on_click=getters.from_balance, style=Style(emoji_id="5264713049637409446")),
+            #Button(Const('С баланса'), id='ref_balance_buy', on_click=getters.from_balance, style=Style(emoji_id="5264713049637409446")),
         ),
         Cancel(Const('Назад'), id='close_dialog', style=Style(emoji_id="5388584622328131561")),
         getter=getters.menu_getter,
