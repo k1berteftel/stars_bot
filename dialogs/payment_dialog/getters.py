@@ -9,7 +9,7 @@ from aiogram_dialog.widgets.input import ManagedTextInput
 from nats.js import JetStreamContext
 
 from utils.payments.create import (get_oxa_payment_data, get_crypto_payment_data, get_freekassa_card, get_freekassa_sbp,
-                                   _get_usdt_rub, _get_ton_usdt)
+                                   _get_usdt_rub, _get_ton_usdt, get_lava_payment)
 from utils.log_utils import write_log
 from utils.payments.process import wait_for_payment
 from utils.transactions import get_stars_price
@@ -150,7 +150,7 @@ async def payment_choose(clb: CallbackQuery, widget: Button, dialog_manager: Dia
         payment = await get_freekassa_sbp(clb.from_user.id, amount, app_id)
     elif payment_type == 'sbp2':
         # write_log(f'Заказ номер {app_id} создало платеж на сбп платега\n')
-        payment = await get_platega_sbp(amount, app_id, clb.from_user.id)
+        payment = await get_lava_payment(clb.from_user.id, amount, app_id, f'Оплата заказа {app_id}')
     elif payment_type == 'crypto':
         payment = await get_oxa_payment_data(usdt)
         task = asyncio.create_task(
