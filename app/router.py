@@ -193,7 +193,7 @@ async def lava_callback(response: Request):
         raise HTTPException(status_code=400, detail="Invalid JSON format")
     headers = dict(response.headers)
     print(headers.items())
-    signature = headers.get('Signature')
+    signature = headers.get('authorization')
     if not check_lava_signature(data, signature):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
