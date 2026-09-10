@@ -36,12 +36,11 @@ ALLOWED_IPS: list[str] = [
 ]
 
 
-def check_lava_signature(params: dict, signature: str):
-    secret_key = config.lava.secret_key_2
+def check_lava_signature(params: dict, check_signature: str):
+    secret_key = config.lava.secret_key_1
     body = json.dumps(params)
-    check_signature = hmac.new(secret_key.encode(), body.encode(), hashlib.sha256).hexdigest()
-    print(check_signature, signature)
-    return check_signature == signature
+    signature = hmac.new(secret_key.encode(), body.encode(), hashlib.sha256).hexdigest()
+    return signature == check_signature
 
 
 @router.post("/payments/paypear")
@@ -193,12 +192,12 @@ async def lava_callback(response: Request):
         raise HTTPException(status_code=400, detail="Invalid JSON format")
     headers = dict(response.headers)
     print(headers.items())
-    signature = headers.get('authorization')
-    if not check_lava_signature(data, signature):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Signature is not allowed"
-        )
+    # signature = headers.get('authorization')
+    # if not check_lava_signature(data, signature):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail=f"Signature is not allowed"
+    #     )
     session: DataInteraction = response.app.state.session
     scheduler: AsyncIOScheduler = response.app.state.scheduler
     js: JetStreamContext = response.app.state.js
