@@ -32,7 +32,10 @@ ALLOWED_IPS: list[str] = [
     "168.119.157.136",
     "168.119.60.227",
     "178.154.197.79",
-    "51.250.54.238"
+    "51.250.54.238",
+    "62.122.173.38",
+    "91.227.144.73",
+    "31.133.222.20"
 ]
 
 
@@ -184,6 +187,12 @@ async def freekassa_callback(response: Request, intid: str | int = Form(...), us
 
 @router.post('/payments/lava')
 async def lava_callback(response: Request):
+    client_ip = response.client.host
+    if client_ip not in ALLOWED_IPS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"IP {client_ip} is not allowed"
+        )
     raw_data = await response.body()
     try:
         data = json.loads(raw_data)
@@ -204,7 +213,7 @@ async def lava_callback(response: Request):
 
     #write_log(f'Заказ номер {us_appId} был принят платежным хендлером lava\n')
 
-    custom_fields = json.loads(data.get('custom_fields'))
+    custom_fields = json.loads('{' + data.get('custom_fields') + '}')
 
     application = await session.get_application(int(custom_fields.get('app_id')))
     if application.status in [0, 2, 3]:

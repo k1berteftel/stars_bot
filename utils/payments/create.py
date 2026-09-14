@@ -205,7 +205,7 @@ async def get_platega_sbp(amount: float, app_id: int, user_id: int):
             ...
 
 
-# print(asyncio.run(get_platega_sbp(100, 502342, 825353281)))
+#print(asyncio.run(get_platega_sbp(100, 502342, 825353281)))
 
 
 async def get_freekassa_card(user_id: int, amount: float, app_id: int):
