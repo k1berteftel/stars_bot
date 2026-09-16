@@ -21,7 +21,7 @@ user_dialog = Dialog(
             Button(Const('Премиум'), id='premium_pay_choose', on_click=getters.buy_choose, style=Style(emoji_id="6190484269513586305"))
         ),
         Column(
-            Start(Const('Удаленные подарки'), id='gift_dialog', state=GiftsSG.choose_gift, style=Style(emoji_id="5203996991054432397")),
+            #Start(Const('Удаленные подарки'), id='gift_dialog', state=GiftsSG.choose_gift, style=Style(emoji_id="5203996991054432397")),
             SwitchTo(Const('Партнерская программа'), id='ref_menu_switcher', state=startSG.ref_menu, style=Style(emoji_id="5377548235709619284")),
             SwitchTo(Const('Профиль'), id='profile_switcher', state=startSG.profile, style=Style(emoji_id="5467730450002746997")),
         ),
