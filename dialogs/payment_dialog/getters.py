@@ -144,13 +144,13 @@ async def payment_choose(clb: CallbackQuery, widget: Button, dialog_manager: Dia
 
     if payment_type == 'card':
         # write_log(f'Заказ номер {app_id} создало платеж на карту\n')
-        payment = await get_freekassa_card(clb.from_user.id, amount, app_id)
+        payment = await get_lava_payment(clb.from_user.id, amount, app_id, f'Оплата заказа {app_id}', 'card')
     elif payment_type == 'sbp1':
         # write_log(f'Заказ номер {app_id} создало платеж на сбп фрикасса\n')
-        payment = await get_freekassa_sbp(clb.from_user.id, amount, app_id)
+        payment = await get_lava_payment(clb.from_user.id, amount, app_id, f'Оплата заказа {app_id}', 'sbp')
     elif payment_type == 'sbp2':
         # write_log(f'Заказ номер {app_id} создало платеж на сбп платега\n')
-        payment = await get_lava_payment(clb.from_user.id, amount, app_id, f'Оплата заказа {app_id}')
+        payment = await get_freekassa_sbp(clb.from_user.id, amount, app_id)
     elif payment_type == 'crypto':
         payment = await get_oxa_payment_data(usdt)
         task = asyncio.create_task(

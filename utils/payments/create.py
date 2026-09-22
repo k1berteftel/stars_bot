@@ -5,6 +5,7 @@ import random
 import hashlib
 import hmac
 import uuid
+from typing import Literal
 
 from cachetools import TTLCache
 
@@ -267,7 +268,36 @@ async def get_freekassa_sbp(user_id: int, amount: float, app_id: int):
 #print(asyncio.run(get_freekassa_sbp(825353281, 140000, 502342)))
 
 
-async def get_lava_payment(user_id: int, amount: float, app_id: int, description: str):
+async def get_freekassa_crypto(user_id: int, amount: float, app_id: int):
+    url = 'https://api.fk.life/v1/orders/create'
+    data = {
+        'shopId': 32219,
+        'nonce': generate_unique_nonce(),
+        'us_userId': str(user_id),
+        'us_appId': str(app_id),
+        'i': 44,
+        'email': f'{user_id}@telegram.org',
+        'ip': '80.80.116.211',
+        'amount': str(amount),
+        'currency': 'RUB',
+        'paymentId': app_id
+    }
+    data = _get_signature(data, config.freekassa.api_key)
+    async with ClientSession() as session:
+        async with session.post(url, json=data) as resp:
+            if resp.status != 200:
+                print(await resp.json())
+                print(resp.status)
+                return False
+            data = await resp.json()
+            # data['orderId']  # ID заказа: int
+            print(data)
+    return {
+        'url': data['location'],
+    }
+
+
+async def get_lava_payment(user_id: int, amount: float, app_id: int, description: str, payment_type: Literal['sbp', 'card']):
     url = 'https://api.lava.ru/business/invoice/create'
     headers = {
         'Accept': 'application/json',
@@ -283,7 +313,7 @@ async def get_lava_payment(user_id: int, amount: float, app_id: int, description
         'successUrl': 'https://t.me/TrustStarsBot',
         'failUrl': 'https://t.me/TrustStarsBot',
         'expire': 60 * 15,
-        'includeService': ['card', 'sbp']
+        'includeService': payment_type
     }
     headers['Signature'] = _get_lava_signature(data)
     async with ClientSession() as session:

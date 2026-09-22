@@ -222,7 +222,7 @@ async def lava_callback(response: Request):
     trans_type = data.get('pay_service')
     if trans_type == 36:
         payment = 'card'
-    if trans_type == 44:
+    if trans_type == 44:  # TODO: тип крипта
         payment = 'sbp'
     data = {
         'transfer_type': application.type,
