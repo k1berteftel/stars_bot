@@ -80,6 +80,12 @@ class Lava:
 
 
 @dataclass
+class Cardlink:
+    token: str
+    shop_id: str
+
+
+@dataclass
 class Config:
     bot: tg_bot
     db: DB
@@ -94,6 +100,7 @@ class Config:
     paypear: Paypear
     platega: Platega
     lava: Lava
+    cardlink: Cardlink
 
 
 def load_config(path: str | None = None) -> Config:
@@ -146,5 +153,9 @@ def load_config(path: str | None = None) -> Config:
             secret_key_1=env('lava_secret_key_1'),
             secret_key_2=env('lava_secret_key_2'),
             shop_id=env('lava_shop_id')
+        ),
+        cardlink=Cardlink(
+            token=env('cardlink_token'),
+            shop_id=env('cardlink_shop_id')
         )
     )

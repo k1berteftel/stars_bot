@@ -244,3 +244,39 @@ async def lava_callback(response: Request):
     return "OK"
 
 
+@router.post('/payments/cardlink')
+async def cardlink_callback(request: Request):
+    form_data = await request.form()
+    session: DataInteraction = request.app.state.session
+    scheduler: AsyncIOScheduler = request.app.state.scheduler
+    js: JetStreamContext = request.app.state.js
+
+    #write_log(f'Заказ номер {us_appId} был принят платежным хендлером lava\n')
+
+    if form_data.get('Status') not in ['SUCCESS', 'OVERPAID']:
+        return "OK"
+    app_id = int(form_data.get('InvId').split('-')[-1])
+
+    application = await session.get_application(app_id)
+    if application.status in [0, 2, 3]:
+        return "OK"
+    payment = 'sbp'
+    data = {
+        'transfer_type': application.type,
+        'username': application.receiver,
+        'currency': application.amount,
+        'payments': payment,
+        'app_id': application.uid_key
+    }
+    #write_log(f'Заказ номер {us_appId} отправляется в консьюмер\n')
+    await send_publisher_data(
+        js=js,
+        subject=config.consumer.subject,
+        data=data
+    )
+    name = f'process_payment_{application.user_id}'
+    for task in asyncio.all_tasks():
+        if task.get_name() == name:
+            task.cancel()
+    return "OK"
+

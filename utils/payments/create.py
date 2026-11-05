@@ -87,7 +87,7 @@ async def get_oxa_payment_data(amount: int | float):
         'id': data['data']['track_id']
     }
 
-#print(asyncio.run(get_oxa_payment_data(11.11)))
+# print(asyncio.run(get_oxa_payment_data(11.11)))
 
 
 async def get_crypto_payment_data(amount: int | float):
@@ -265,7 +265,7 @@ async def get_freekassa_sbp(user_id: int, amount: float, app_id: int):
         'url': data['location'],
     }
 
-#print(asyncio.run(get_freekassa_sbp(825353281, 140000, 502342)))
+# print(asyncio.run(get_freekassa_sbp(825353281, 140000, 502342)))
 
 
 async def get_freekassa_crypto(user_id: int, amount: float, app_id: int):
@@ -335,7 +335,68 @@ async def get_lava_payment(user_id: int, amount: float, app_id: int, description
     }
 
 
-#print(asyncio.run(get_lava_payment(8005178596, 51.0, 15048, 'Тестовая оплата')))
+async def get_cardlink_sbp(amount: str, app_id: int, user_id: int, username: str, **kwargs):
+    """
+    payment_type=stars,premium
+    stars:rate,stars
+    """
+    payment_type = kwargs.get('payment_type')
+
+    url = f'https://cardlink.link/api/v1/bill/create'
+    headers = {
+        'Authorization': f'Bearer {config.cardlink.token}'
+    }
+    if payment_type == 'stars':
+        item = {
+            'name': 'Stars',
+            'extra': {
+                'telegram_username': username,
+                'telegram_id': str(user_id)
+            },
+            'price': str(kwargs.get('rate')),
+            'category': 'digital/stars',
+            'quantity': str(kwargs.get('stars'))
+        }
+    else:
+        item = {
+            'name': 'Telegram Premium',
+            'extra': {
+                'telegram_username': username,
+                'telegram_id': str(user_id)
+            },
+            'price': str(kwargs.get('rate')),
+            'category': 'digital/subscription/premium',
+            'quantity': str(kwargs.get('stars'))  # ключи price, category и quantity выше
+            # должны быть адаптированны под покупку tg premium
+        }
+    data = {
+        'amount': float(amount),
+        'shop_id': config.cardlink.shop_id,
+        'order_id': f'order-{app_id}',
+        'description': 'Тест платеж',
+        'items': [
+            item
+        ],
+        'type': 'normal',
+        'currency_in': 'RUB',
+        'payer_email': f'{user_id}@telegram.org'
+    }
+    async with ClientSession() as session:
+        async with session.post(url, headers=headers, json=data) as res:
+            if res.status != 200:
+                try:
+                    print(await res.json())
+                except Exception:
+                    print(await res.text())
+                print(res.status)
+                return False
+            data = await res.json()
+            if data.get('success') != 'true':
+                return False
+        return {
+            'id': data.get('bill_id'),
+            'link_page_url': data.get('link_page_url')
+        }
 
 
 async def check_p2p_sbp(order_id: str, id: str):
@@ -425,4 +486,63 @@ async def _get_ton_usdt() -> float:
     except Exception:
         return TON_USDT
 
+
+async def testing(amount: float, user_id: int, username: str, app_id: int):
+    shop_id = ''
+    token = ''
+    url = f'https://cardlink.link/api/v1/bill/create'
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+    data = {
+        'amount': float(amount),
+        'shop_id': shop_id,
+        'order_id': f'order-{app_id}',
+        'description': 'Тест платеж',
+        'items': [
+            {
+                'name': 'Stars',
+                'extra': {
+                'telegram_username': username,
+                    'telegram_id': str(user_id)
+                },
+                'price': '1.3',
+                'category': 'digital/stars',
+                'quantity': '50'
+            }
+        ],
+        'type': 'normal',
+        'currency_in': 'RUB',
+        'payer_email': f'{user_id}@telegram.org'
+    }
+    async with ClientSession() as session:
+        async with session.post(url, headers=headers, json=data) as res:
+            data = await res.json()
+            print(res.status)
+            print(data)
+
+
+    # ручная проверка статуса
+    # order_id = 'AmJAALlW0v'
+    # url = 'https://cardlink.link/api/v1/bill/status'
+    # headers = {
+    #     'Authorization': f'Bearer {token}'
+    # }
+    # data = {
+    #     'id': order_id
+    # }
+    # async with ClientSession() as session:
+    #     async with session.get(url, headers=headers, json=data) as res:
+    #         data = await res.json()
+    #         print(res.status)
+    #         print(data)
+    #         if res.status not in [200, 201]:
+    #             return
+    #         return data.get('status') in ['SUCCESS', 'OVERPAID']
+
+
+
+
+
+asyncio.run(testing(72, 8005178596, '@Leggit_dev', 8336))
 
